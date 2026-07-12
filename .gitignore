@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+env/
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+*.log
+media/
+staticfiles/
+
+# 環境變數 (含 API 金鑰，絕不上傳)
+.env
+.env.local
+.env.*.local
+
+# Node
+node_modules/
+.next/
+dist/
+
+# Redis
+dump.rdb
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/

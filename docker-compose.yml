@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # Django Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://postgres:password@db:5432/agent_dating
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./backend:/app
+    command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
+
+  # Celery Worker
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/agent_dating
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./backend:/app
+    command: celery -A config worker -l info
+
+  # Celery Beat (Scheduler)
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/agent_dating
+      - CELERY_BROKER_URL=redis://redis:6379/1
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./backend:/app
+    command: celery -A config beat -l info
+
+  # PostgreSQL Database
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      - POSTGRES_DB=agent_dating
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # Vue Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host
+
+volumes:
+  postgres_data:
+  redis_data:

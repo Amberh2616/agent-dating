@@ -1,0 +1,3616 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BE 76 - AI Dating Village</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: #5aaae8;
+      overflow: hidden;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      height: 100%;
+    }
+    #game { width: 100vw; height: 100vh; pointer-events: auto; position: relative; z-index: 1; }
+    #game canvas { pointer-events: auto; position: relative; z-index: 1; }
+
+    /* ==================== Login Screen ==================== */
+    #loginScreen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #1b1b2f 0%, #2d2d4a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .login-box {
+      background: linear-gradient(180deg, #2a2a48 0%, #1e1e36 100%);
+      border: 3px solid #4a4a7a;
+      border-radius: 20px;
+      padding: 40px;
+      width: 380px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    .login-logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .login-logo h1 {
+      color: #7ecfff;
+      font-size: 36px;
+      text-shadow: 0 0 20px rgba(126,207,255,0.5);
+      letter-spacing: 4px;
+    }
+    .login-logo p {
+      color: #a0a0cc;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .login-field {
+      margin-bottom: 20px;
+    }
+    .login-field label {
+      display: block;
+      color: #7ecfff;
+      font-size: 12px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .login-field input {
+      width: 100%;
+      background: #151525;
+      border: 2px solid #4a4a7a;
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .login-field input:focus {
+      border-color: #7ecfff;
+    }
+    .login-field input::placeholder {
+      color: #666688;
+    }
+    .login-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #5588ff 0%, #7755ee 100%);
+      border: none;
+      border-radius: 10px;
+      padding: 16px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+    .login-btn:hover {
+      background: linear-gradient(135deg, #66aaff 0%, #8866ff 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(85,136,255,0.4);
+    }
+    .login-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .login-error {
+      color: #ff6688;
+      font-size: 13px;
+      margin-top: 15px;
+      text-align: center;
+      min-height: 20px;
+    }
+    .login-demo {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #4a4a7a;
+      text-align: center;
+    }
+    .login-demo p {
+      color: #888;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    .demo-accounts {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .demo-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid #4a4a7a;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #a0a0cc;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .demo-btn:hover {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+
+    /* ==================== UI Overlay ==================== */
+    .ui { position: fixed; z-index: 100; }
+
+    .header {
+      top: 0; left: 0; right: 0; height: 48px;
+      background: linear-gradient(180deg, #2d2d4a 0%, #1f1f35 100%);
+      border-bottom: 3px solid #4a4a7a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .logo {
+      color: #7ecfff;
+      font-weight: bold;
+      font-size: 22px;
+      text-shadow: 0 0 10px rgba(126,207,255,0.5);
+      letter-spacing: 2px;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .room-info {
+      color: #a0a0cc;
+      font-size: 14px;
+      background: rgba(0,0,0,0.3);
+      padding: 6px 14px;
+      border-radius: 15px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #88ddaa;
+      font-size: 13px;
+    }
+    .user-info .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5588ff 0%, #7755ee 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #fff;
+    }
+    .logout-btn {
+      background: rgba(255,100,100,0.2);
+      border: 1px solid rgba(255,100,100,0.3);
+      color: #ff8888;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .logout-btn:hover {
+      background: rgba(255,100,100,0.3);
+    }
+
+    .panel {
+      top: 70px; left: 16px;
+      background: linear-gradient(180deg, #2a2a48 0%, #1e1e36 100%);
+      border: 2px solid #4a4a7a;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .panel-title {
+      color: #7ecfff;
+      font-size: 11px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .room-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 140px;
+      background: linear-gradient(180deg, #35355a 0%, #2a2a48 100%);
+      border: 2px solid #4a4a7a;
+      color: #b0b0dd;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .room-btn:hover {
+      background: linear-gradient(180deg, #45458a 0%, #35355a 100%);
+      border-color: #6a6aaa;
+      transform: translateX(4px);
+    }
+    .room-btn.active {
+      background: linear-gradient(135deg, #5588ff 0%, #7755ee 100%);
+      color: #fff;
+      border-color: #88aaff;
+      box-shadow: 0 0 15px rgba(85,136,255,0.4);
+    }
+    .room-btn .icon { font-size: 16px; }
+
+    /* ==================== Chat Box ==================== */
+    .chat {
+      bottom: 16px; right: 16px; width: 360px;
+      background: linear-gradient(180deg, #2a2a48 0%, #1e1e36 100%);
+      border: 2px solid #4a4a7a;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .chat-head {
+      background: linear-gradient(135deg, #5588ff 0%, #7755ee 100%);
+      color: #fff;
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chat-head:hover {
+      background: linear-gradient(135deg, #66aaff 0%, #8866ff 100%);
+    }
+    .chat-head .title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chat-head .toggle {
+      font-size: 18px;
+      transition: transform 0.3s;
+    }
+    .chat.collapsed .toggle { transform: rotate(180deg); }
+    .chat.collapsed .chat-body,
+    .chat.collapsed .chat-input { display: none; }
+
+    .chat-body {
+      height: 220px;
+      overflow-y: auto;
+      padding: 14px;
+      background: rgba(10, 10, 20, 0.6);
+    }
+    .chat-msg {
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .chat-msg .sender {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .chat-msg .sender.user { color: #88ddaa; }
+    .chat-msg .sender.agent { color: #7ecfff; }
+    .chat-msg .sender.system { color: #ffaa66; }
+    .chat-msg .content {
+      color: #d0d0ee;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      display: inline-block;
+      max-width: 90%;
+    }
+    .chat-msg.from-agent .content {
+      background: rgba(126,207,255,0.1);
+      border-left: 3px solid #7ecfff;
+    }
+    .chat-msg.from-user .content {
+      background: rgba(136,221,170,0.1);
+      border-left: 3px solid #88ddaa;
+    }
+    .chat-msg .typing {
+      color: #888;
+      font-style: italic;
+    }
+
+    .chat-input {
+      display: flex;
+      border-top: 2px solid #4a4a7a;
+    }
+    .chat-input input {
+      flex: 1;
+      background: #151525;
+      border: none;
+      color: #fff;
+      padding: 14px 16px;
+      font-size: 13px;
+      outline: none;
+    }
+    .chat-input input::placeholder { color: #666688; }
+    .chat-input input:disabled {
+      opacity: 0.5;
+    }
+    .chat-input button {
+      background: linear-gradient(135deg, #5588ff 0%, #7755ee 100%);
+      border: none;
+      color: #fff;
+      padding: 14px 22px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+    .chat-input button:hover:not(:disabled) {
+      background: linear-gradient(135deg, #66aaff 0%, #8866ff 100%);
+    }
+    .chat-input button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .user-count {
+      bottom: 16px; left: 16px;
+      background: linear-gradient(180deg, #2a2a48 0%, #1e1e36 100%);
+      border: 2px solid #4a4a7a;
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #88ddaa;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .user-count .dot {
+      width: 8px;
+      height: 8px;
+      background: #44ff88;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .user-count span { color: #44ff88; font-weight: bold; }
+
+    /* ==================== Chat Mode Toggle ==================== */
+    .mode-toggle {
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.3);
+      border-bottom: 1px solid #4a4a7a;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #4a4a7a;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.05);
+      color: #a0a0cc;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-btn:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .mode-btn.active {
+      background: linear-gradient(135deg, #5588ff 0%, #7755ee 100%);
+      color: #fff;
+      border-color: transparent;
+    }
+    .mode-btn.ai-mode.active {
+      background: linear-gradient(135deg, #ff8855 0%, #ff5588 100%);
+    }
+    .mode-indicator {
+      font-size: 10px;
+      color: #888;
+      padding: 4px 12px;
+      background: rgba(0,0,0,0.2);
+      border-top: 1px solid #4a4a7a;
+      text-align: center;
+    }
+    .mode-indicator.ai { color: #ff8855; }
+    .mode-indicator.user { color: #44ff88; }
+
+    /* Scrollbar */
+    .chat-body::-webkit-scrollbar { width: 6px; }
+    .chat-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    .chat-body::-webkit-scrollbar-thumb { background: #5588ff; border-radius: 3px; }
+
+    /* ==================== Chat Bubble (In-Game) ==================== */
+    .chat-bubble {
+      position: absolute;
+      background: #fff;
+      color: #333;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      max-width: 180px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+      z-index: 500;
+      pointer-events: none;
+      animation: bubbleIn 0.3s ease-out;
+    }
+    .chat-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 8px solid transparent;
+      border-top-color: #fff;
+      border-bottom: 0;
+    }
+    @keyframes bubbleIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.9); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Loading */
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0% { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+    }
+
+    /* ==================== Agent Intent Display ==================== */
+    .agent-intent {
+      position: fixed;
+      background: linear-gradient(135deg, rgba(85,136,255,0.9) 0%, rgba(119,85,238,0.9) 100%);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: bold;
+      transform: translateX(-50%);
+      pointer-events: none;
+      white-space: nowrap;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 2px 10px rgba(85,136,255,0.4);
+      animation: intentPulse 2s infinite;
+      z-index: 999998;
+    }
+    .agent-intent.socialize { background: linear-gradient(135deg, #ff8855 0%, #ff5588 100%); }
+    .agent-intent.make_friend { background: linear-gradient(135deg, #44cc88 0%, #22aa66 100%); }
+    .agent-intent.chat_topic { background: linear-gradient(135deg, #7ecfff 0%, #5588ff 100%); }
+    .agent-intent.explore_room { background: linear-gradient(135deg, #ffaa33 0%, #ff8800 100%); }
+    .agent-intent.rest { background: linear-gradient(135deg, #888 0%, #666 100%); }
+    @keyframes intentPulse {
+      0%, 100% { opacity: 0.9; }
+      50% { opacity: 1; }
+    }
+
+    /* ==================== Goal Achieved Notification ==================== */
+    .goal-notification {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #44ff88 0%, #22cc66 100%);
+      color: #000;
+      padding: 14px 28px;
+      border-radius: 30px;
+      font-size: 15px;
+      font-weight: bold;
+      box-shadow: 0 6px 30px rgba(68,255,136,0.5);
+      z-index: 1000001;
+      animation: goalSlideIn 0.4s ease-out, goalSlideOut 0.4s ease-in 3.6s forwards;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .goal-notification .icon {
+      font-size: 24px;
+    }
+    @keyframes goalSlideIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    @keyframes goalSlideOut {
+      from { opacity: 1; transform: translateX(-50%) translateY(0); }
+      to { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+    }
+
+    /* ==================== Proximity/Invite Indicators ==================== */
+    .proximity-line {
+      position: fixed;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(126,207,255,0.5) 0%, rgba(126,207,255,0.1) 100%);
+      pointer-events: none;
+      z-index: 999990;
+      transform-origin: left center;
+    }
+    .invite-popup {
+      position: fixed;
+      background: linear-gradient(180deg, #2a2a48 0%, #1e1e36 100%);
+      border: 2px solid #ff8855;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 8px 30px rgba(255,136,85,0.3);
+      z-index: 1000002;
+      animation: invitePopIn 0.3s ease-out;
+    }
+    .invite-popup h4 {
+      color: #ff8855;
+      margin: 0 0 8px 0;
+      font-size: 14px;
+    }
+    .invite-popup p {
+      color: #ccc;
+      margin: 0 0 12px 0;
+      font-size: 12px;
+    }
+    .invite-popup .btns {
+      display: flex;
+      gap: 8px;
+    }
+    .invite-popup button {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      border: none;
+    }
+    .invite-popup .accept {
+      background: linear-gradient(135deg, #44cc88 0%, #22aa66 100%);
+      color: #fff;
+    }
+    .invite-popup .decline {
+      background: rgba(255,255,255,0.1);
+      color: #aaa;
+    }
+    @keyframes invitePopIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* ==================== Thoughts Panel ==================== */
+    .thoughts-panel {
+      position: fixed;
+      top: 70px;
+      right: 390px;
+      width: 280px;
+      background: linear-gradient(180deg, #2a2a48 0%, #1e1e36 100%);
+      border: 2px solid #4a4a7a;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      max-height: 360px;
+      z-index: 100;
+      display: none;
+    }
+    .thoughts-header {
+      background: linear-gradient(135deg, #7755ee 0%, #5588ff 100%);
+      color: #fff;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .thoughts-body {
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    .thought-section {
+      margin-bottom: 12px;
+    }
+    .thought-section h5 {
+      color: #7ecfff;
+      font-size: 11px;
+      margin: 0 0 6px 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .thought-item {
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: #ccc;
+      line-height: 1.4;
+    }
+    .thought-item.intent {
+      border-left: 3px solid #ff8855;
+    }
+    .thought-item.reflection {
+      border-left: 3px solid #7ecfff;
+      font-style: italic;
+    }
+    .thought-item .meta {
+      color: #888;
+      font-size: 10px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="loginScreen">
+    <div class="login-box">
+      <div class="login-logo">
+        <h1>BE 76</h1>
+        <p>AI Dating Village</p>
+      </div>
+      <form id="loginForm">
+        <div class="login-field">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="your@email.com" required>
+        </div>
+        <div class="login-field">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="********" required>
+        </div>
+        <button type="submit" class="login-btn" id="loginBtn">Enter World</button>
+        <div class="login-error" id="loginError"></div>
+      </form>
+      <div class="login-demo">
+        <p>Demo Accounts</p>
+        <div class="demo-accounts">
+          <button type="button" class="demo-btn" onclick="fillDemo('maria@test.com', '1234')">Maria</button>
+          <button type="button" class="demo-btn" onclick="fillDemo('amberh2616@gmail.com', '1234')">Admin</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Canvas -->
+  <div id="game"></div>
+
+  <!-- UI Overlay -->
+  <header class="ui header" style="display: none;" id="gameUI">
+    <span class="logo">BE 76</span>
+    <div class="header-right">
+      <span class="room-info" id="roomInfo">Fashion Lounge</span>
+      <button class="thoughts-btn" onclick="toggleThoughts()" style="background:linear-gradient(135deg,#7755ee 0%,#5588ff 100%);border:none;color:#fff;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;">Thoughts</button>
+      <div class="user-info">
+        <div class="avatar" id="userAvatar">?</div>
+        <span id="userName">Guest</span>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <div class="ui panel" id="roomPanel">
+    <div class="panel-title">Rooms</div>
+    <button class="room-btn active" data-room="fashion">
+      <span class="icon">&#128151;</span> Soul Lounge
+    </button>
+    <button class="room-btn" data-room="beauty">
+      <span class="icon">&#10024;</span> Match Hub
+    </button>
+    <button class="room-btn" data-room="travel">
+      <span class="icon">&#127759;</span> World Cafe
+    </button>
+    <button class="room-btn" data-room="music">
+      <span class="icon">&#127925;</span> Vibe Room
+    </button>
+  </div>
+
+  <div class="ui chat" id="chatBox" style="display: none;">
+    <div class="chat-head" onclick="toggleChat()">
+      <span class="title">Chat with <span id="chatTarget">-</span></span>
+      <span class="toggle">&#9660;</span>
+    </div>
+    <div class="mode-toggle" id="modeToggle" style="display: flex;">
+      <button class="mode-btn ai-mode active" id="modeAI" onclick="switchMode('ai')">AI Chat</button>
+      <button class="mode-btn" id="modeUser" onclick="switchMode('user')">Me Chat</button>
+    </div>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-input">
+      <input id="chatIn" placeholder="Say something..." disabled>
+      <button id="chatSendBtn" onclick="sendChat()" disabled>Send</button>
+    </div>
+    <div class="mode-indicator ai" id="modeIndicator">Mode: AI Chat</div>
+  </div>
+
+  <div class="ui user-count" style="display: none;" id="userCountPanel">
+    <div class="dot"></div>
+    <span id="userCount">0</span> agents online
+  </div>
+
+  <!-- Thoughts Panel (Agent's mind) -->
+  <div class="thoughts-panel" id="thoughtsPanel">
+    <div class="thoughts-header" onclick="toggleThoughts()">
+      <span>Agent Thoughts</span>
+      <span id="thoughtsClose">X</span>
+    </div>
+    <div class="thoughts-body" id="thoughtsBody">
+      <div class="thought-section">
+        <h5>Current Goals</h5>
+        <div id="thoughtsIntents">
+          <div class="thought-item intent">Loading...</div>
+        </div>
+      </div>
+      <div class="thought-section">
+        <h5>Recent Reflections</h5>
+        <div id="thoughtsReflections">
+          <div class="thought-item reflection">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bubble Layer - HIGHEST z-index for chat bubbles -->
+  <div id="bubble-layer" style="position:fixed; inset:0; pointer-events:none; z-index:2147483646;"></div>
+
+  <script>
+    // Track bubble positions to stack them
+    var bubbleOffsets = {};
+
+    function showBubble(name, msg) {
+      console.log('[showBubble] Called with:', name, msg);
+
+      // Use dedicated bubble-layer to avoid Phaser/overlay interference
+      var layer = document.getElementById('bubble-layer');
+      if (!layer) {
+        console.error('[showBubble] bubble-layer not found! Creating fallback...');
+        // Fallback: create bubble-layer if missing
+        layer = document.createElement('div');
+        layer.id = 'bubble-layer';
+        layer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147483646;';
+        document.body.appendChild(layer);
+      }
+
+      var id = 'bubble-' + name.replace(/[^a-zA-Z0-9]/g, '_') + '-' + Date.now();
+
+      // Generate consistent color based on name (hash-based)
+      function nameToColor(n) {
+        var hash = 0;
+        for (var i = 0; i < n.length; i++) hash = n.charCodeAt(i) + ((hash << 5) - hash);
+        var hue = Math.abs(hash) % 360;
+        return 'hsl(' + hue + ', 70%, 50%)';
+      }
+
+      // Different colors and positions for different agents
+      var agentStyles = {
+        'Amber': { border: '#ff69b4', text: '#ff69b4', side: 'left' },   // Pink, left
+        'Mike': { border: '#5588ff', text: '#5588ff', side: 'right' },   // Blue, right
+      };
+
+      // If agent not in predefined styles, generate color from name
+      var style = agentStyles[name];
+      if (!style) {
+        var color = nameToColor(name);
+        // Alternate sides based on name length
+        var side = name.length % 2 === 0 ? 'left' : 'right';
+        style = { border: color, text: color, side: side };
+      }
+
+      // Count bubbles on same side for stacking
+      var sameSideBubbles = layer.querySelectorAll('.agent-bubble[data-side="' + style.side + '"]');
+      var topOffset = 70 + (sameSideBubbles.length * 80);
+
+      var bubble = document.createElement('div');
+      bubble.id = id;
+      bubble.className = 'agent-bubble';
+      bubble.setAttribute('data-side', style.side);
+
+      // Position: left side or right side (right side offset to avoid chat box)
+      var positionStyle = style.side === 'left'
+        ? 'left:20px;'
+        : 'right:400px;';
+
+      bubble.style.cssText = [
+        'position:fixed',
+        'top:' + topOffset + 'px',
+        positionStyle,
+        'background:#fff',
+        'color:#333',
+        'padding:12px 18px',
+        'border-radius:14px',
+        'font-size:18px',
+        'box-shadow:0 4px 20px rgba(0,0,0,0.4)',
+        'border:3px solid ' + style.border,
+        'max-width:400px',
+        'text-align:left',
+        'pointer-events:none',
+        'z-index:2147483647',
+        'animation:fadeIn 0.3s ease',
+        'word-wrap:break-word',
+        'white-space:pre-wrap'
+      ].join(';');
+      bubble.innerHTML = '<b style="color:' + style.text + '">' + name + ':</b> ' + msg;
+      layer.appendChild(bubble);
+
+      console.log('Bubble shown via bubble-layer:', name, msg);
+
+      setTimeout(function() {
+        var el = document.getElementById(id);
+        if (el) {
+          el.style.opacity = '0';
+          el.style.transition = 'opacity 0.3s';
+          setTimeout(function() { el.remove(); }, 300);
+        }
+      }, 30000);  // 30 seconds display time
+    }
+
+    // Global test function for console debugging
+    window.testBubble = function(name, msg) {
+      name = name || 'Test';
+      msg = msg || 'Hello! ' + new Date().toLocaleTimeString();
+      console.log('[testBubble] Testing bubble for:', name);
+      showBubble(name, msg);
+    };
+
+    // Also expose showBubble globally
+    window.showBubble = showBubble;
+
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+  <script>
+// =============================================
+// BE 76 - AI Dating Village (Integrated Version)
+// =============================================
+
+// === Configuration ===
+const API_BASE = 'http://localhost:8000/api';
+const WS_BASE = 'ws://localhost:8000/ws';
+const AVATAR_API = 'https://www.habbo.com/habbo-imaging/avatarimage';
+
+const TILE_W = 64;
+const TILE_H = 32;
+const TILE_DEPTH = 8;
+
+// === App State ===
+let authToken = localStorage.getItem('authToken');
+let currentUser = null;
+let currentConversationId = null;
+let currentChatAgent = null;
+let agents = [];
+let gameScene = null;
+let chatWebSocket = null;
+let worldWebSocket = null;
+let worldReconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+let heartbeatInterval = null;
+let pollingInterval = null;
+const POLL_INTERVAL = 3000; // 3 seconds
+let currentRoomDbId = null; // Database room ID for polling
+
+// === Room Data ===
+const ROOMS = {
+  fashion: {
+    id: 'fashion',
+    name: 'Soul Lounge',
+    gridW: 12,
+    gridH: 10,
+    floor: { base: 0xc4a882, accent: 0xb49872, border: 0x8a6a4a, pattern: 'wood' },
+    walls: { main: 0x7eb5d6, stripe: 0x6aa5c6, baseboard: 0x5a3a2a, height: 180 },
+    wallDecor: [
+      { type: 'window', x: 2 },
+      { type: 'window', x: 5 },
+      { type: 'painting', x: 8, style: 'abstract' },
+    ],
+    furni: [
+      // 沙發區
+      { type: 'sofa', x: 1, y: 2, color: 0xcc3344 },
+      { type: 'sofa', x: 1, y: 3, color: 0xcc3344 },
+      { type: 'coffeeTable', x: 2, y: 2 },
+      { type: 'armchair', x: 3, y: 1, color: 0xcc3344 },
+      // 書架區
+      { type: 'bookshelf', x: 10, y: 1 },
+      { type: 'bookshelf', x: 10, y: 2 },
+      // 吧台區
+      { type: 'bar', x: 6, y: 1 },
+      { type: 'barStool', x: 5, y: 2 },
+      { type: 'barStool', x: 6, y: 2 },
+      { type: 'barStool', x: 7, y: 2 },
+      // 裝飾
+      { type: 'plant', x: 0, y: 0 },
+      { type: 'plant', x: 11, y: 0 },
+      { type: 'lamp', x: 4, y: 4 },
+      { type: 'rug', x: 2, y: 3, color: 0x884422, w: 3, h: 2 },
+    ]
+  },
+  beauty: {
+    id: 'beauty',
+    name: 'Rooftop Garden',
+    gridW: 14,
+    gridH: 10,
+    floor: { base: 0x7a9a6a, accent: 0x6a8a5a, border: 0x4a6a3a, pattern: 'grass' },
+    walls: { main: 0x87ceeb, stripe: 0x77bedd, baseboard: 0x5a7a5a, height: 80, style: 'fence' },
+    wallDecor: [
+      { type: 'sky' },
+    ],
+    furni: [
+      // 戶外座位區
+      { type: 'bench', x: 1, y: 2, color: 0xffffff },
+      { type: 'bench', x: 1, y: 4, color: 0xffffff },
+      { type: 'gardenTable', x: 2, y: 3 },
+      // 噴水池
+      { type: 'fountain', x: 7, y: 4 },
+      // 花園區
+      { type: 'flowerBed', x: 11, y: 1, color: 0xff6699 },
+      { type: 'flowerBed', x: 12, y: 1, color: 0xffaa33 },
+      { type: 'flowerBed', x: 13, y: 1, color: 0xff6699 },
+      { type: 'flowerBed', x: 11, y: 2, color: 0xffaa33 },
+      { type: 'flowerBed', x: 12, y: 2, color: 0xff6699 },
+      { type: 'flowerBed', x: 13, y: 2, color: 0xffaa33 },
+      // 樹木
+      { type: 'tree', x: 0, y: 0 },
+      { type: 'tree', x: 5, y: 0 },
+      { type: 'tree', x: 10, y: 0 },
+      // 涼亭
+      { type: 'gazebo', x: 4, y: 6 },
+      // 燈柱
+      { type: 'streetLamp', x: 3, y: 1 },
+      { type: 'streetLamp', x: 8, y: 1 },
+    ]
+  },
+  travel: {
+    id: 'travel',
+    name: 'Cozy Cafe',
+    gridW: 11,
+    gridH: 9,
+    floor: { base: 0xc4a882, accent: 0xb49872, border: 0x8a6a4a, pattern: 'tile' },
+    walls: { main: 0xd4c4a4, stripe: 0xc4b494, baseboard: 0x6a4a2a, height: 180, style: 'brick' },
+    wallDecor: [
+      { type: 'chalkboard', x: 2 },
+      { type: 'shelf', x: 5 },
+      { type: 'clock', x: 8 },
+    ],
+    furni: [
+      // 咖啡吧台
+      { type: 'counter', x: 1, y: 1, w: 3 },
+      { type: 'coffeeMachine', x: 1, y: 0 },
+      { type: 'cakeDisplay', x: 2, y: 0 },
+      // 座位區
+      { type: 'cafeTable', x: 4, y: 3 },
+      { type: 'chair', x: 3, y: 3, color: 0x8b4513 },
+      { type: 'chair', x: 5, y: 3, color: 0x8b4513 },
+      { type: 'cafeTable', x: 4, y: 5 },
+      { type: 'chair', x: 3, y: 5, color: 0x8b4513 },
+      { type: 'chair', x: 5, y: 5, color: 0x8b4513 },
+      { type: 'cafeTable', x: 8, y: 3 },
+      { type: 'chair', x: 7, y: 3, color: 0x8b4513 },
+      { type: 'chair', x: 9, y: 3, color: 0x8b4513 },
+      // 窗邊沙發
+      { type: 'sofa', x: 8, y: 6, color: 0x996633 },
+      { type: 'coffeeTable', x: 8, y: 7 },
+      // 裝飾
+      { type: 'plant', x: 0, y: 0 },
+      { type: 'plant', x: 10, y: 0 },
+      { type: 'hangingPlant', x: 6, y: 1 },
+    ]
+  },
+  music: {
+    id: 'music',
+    name: 'Night Club',
+    gridW: 14,
+    gridH: 11,
+    floor: { base: 0x1a1a2e, accent: 0x16213e, border: 0x0f0f1a, pattern: 'dance' },
+    walls: { main: 0x1a1a2e, stripe: 0x0f3460, baseboard: 0x0a0a15, height: 220, style: 'neon' },
+    wallDecor: [
+      { type: 'neonSign', x: 3, text: 'VIBE' },
+      { type: 'speakers', x: 7 },
+      { type: 'disco', x: 10 },
+    ],
+    furni: [
+      // DJ 台
+      { type: 'djBooth', x: 6, y: 1 },
+      { type: 'speaker', x: 4, y: 1 },
+      { type: 'speaker', x: 8, y: 1 },
+      // 舞池
+      { type: 'danceFloor', x: 6, y: 5, w: 4, h: 3 },
+      // VIP 區
+      { type: 'vipSofa', x: 1, y: 2, color: 0x9933ff },
+      { type: 'vipSofa', x: 1, y: 4, color: 0x9933ff },
+      { type: 'vipTable', x: 2, y: 3 },
+      { type: 'vipSofa', x: 11, y: 2, color: 0x9933ff },
+      { type: 'vipSofa', x: 11, y: 4, color: 0x9933ff },
+      { type: 'vipTable', x: 10, y: 3 },
+      // 吧台
+      { type: 'neonBar', x: 1, y: 8, w: 4 },
+      { type: 'barStool', x: 1, y: 9, color: 0x9933ff },
+      { type: 'barStool', x: 2, y: 9, color: 0x9933ff },
+      { type: 'barStool', x: 3, y: 9, color: 0x9933ff },
+      // 燈光
+      { type: 'laserLight', x: 3, y: 0 },
+      { type: 'laserLight', x: 9, y: 0 },
+      { type: 'discoBall', x: 6, y: 0 },
+    ]
+  }
+};
+
+let currentRoom = 'fashion';
+
+// =============================================
+// API Service
+// =============================================
+const api = {
+  async request(endpoint, options = {}) {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers
+    };
+
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers
+    });
+
+    if (response.status === 401) {
+      // Token expired
+      logout();
+      throw new Error('Session expired');
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || data.detail || 'API Error');
+    }
+
+    return data;
+  },
+
+  // Auth
+  async login(email, password) {
+    const data = await this.request('/auth/token/', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+    return data;
+  },
+
+  // User
+  async getProfile() {
+    return await this.request('/user/profile/');
+  },
+
+  // Agents
+  async getMyAgent() {
+    return await this.request('/agent/me/');
+  },
+
+  async getAgent(agentId) {
+    return await this.request(`/agent/${agentId}/`);
+  },
+
+  async getMatchRecommendations() {
+    return await this.request('/match/recommendations/');
+  },
+
+  // Chat
+  async startChat(agentId) {
+    return await this.request(`/chat/start/${agentId}/`, {
+      method: 'POST'
+    });
+  },
+
+  async sendMessage(conversationId, content) {
+    return await this.request(`/chat/conversations/${conversationId}/send/`, {
+      method: 'POST',
+      body: JSON.stringify({ content })
+    });
+  },
+
+  async getMessages(conversationId) {
+    return await this.request(`/chat/conversations/${conversationId}/`);
+  },
+
+  // World - Agent positions
+  async getRoomAgents(roomId) {
+    return await this.request(`/world/room/${roomId}/agents/`);
+  },
+
+  // AI Reports
+  async getAIReports(unreadOnly = false, limit = 20) {
+    return await this.request(`/chat/ai-reports/?unread_only=${unreadOnly}&limit=${limit}`);
+  },
+
+  async getAIReportDetail(reportId) {
+    return await this.request(`/chat/ai-reports/${reportId}/`);
+  },
+
+  // Chat Mode
+  async getConversationMode(conversationId) {
+    return await this.request(`/chat/conversations/${conversationId}/mode/`);
+  },
+
+  async setConversationMode(conversationId, mode) {
+    return await this.request(`/chat/conversations/${conversationId}/mode/`, {
+      method: 'POST',
+      body: JSON.stringify({ mode })
+    });
+  },
+
+  async getImpressionHistory(conversationId) {
+    return await this.request(`/chat/conversations/${conversationId}/impression/`);
+  }
+};
+
+// =============================================
+// Auth & Login
+// =============================================
+function fillDemo(email, password) {
+  document.getElementById('loginEmail').value = email;
+  document.getElementById('loginPassword').value = password;
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const errorEl = document.getElementById('loginError');
+  const btnEl = document.getElementById('loginBtn');
+
+  errorEl.textContent = '';
+  btnEl.disabled = true;
+  btnEl.textContent = 'Connecting...';
+
+  try {
+    const data = await api.login(email, password);
+    authToken = data.access;
+    localStorage.setItem('authToken', authToken);
+
+    // Get user profile
+    currentUser = await api.getProfile();
+
+    // Enter game
+    enterGame();
+  } catch (err) {
+    errorEl.textContent = err.message || 'Login failed';
+    btnEl.disabled = false;
+    btnEl.textContent = 'Enter World';
+  }
+});
+
+function logout() {
+  authToken = null;
+  currentUser = null;
+  localStorage.removeItem('authToken');
+
+  // Close WebSockets
+  if (chatWebSocket) {
+    chatWebSocket.close();
+    chatWebSocket = null;
+  }
+  if (worldWebSocket) {
+    worldWebSocket.close();
+    worldWebSocket = null;
+  }
+  stopHeartbeat();
+  stopPolling();
+
+  // Hide game UI
+  document.getElementById('gameUI').style.display = 'none';
+  document.getElementById('roomPanel').style.display = 'none';
+  document.getElementById('chatBox').style.display = 'none';
+  document.getElementById('userCountPanel').style.display = 'none';
+
+  // Show login
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+async function enterGame() {
+  // Hide login
+  document.getElementById('loginScreen').style.display = 'none';
+
+  // Show game UI
+  document.getElementById('gameUI').style.display = 'flex';
+  document.getElementById('roomPanel').style.display = 'block';
+  document.getElementById('chatBox').style.display = 'block';
+  document.getElementById('userCountPanel').style.display = 'flex';
+
+  // Update user info
+  document.getElementById('userName').textContent = currentUser.username || currentUser.email.split('@')[0];
+  document.getElementById('userAvatar').textContent = (currentUser.username || 'U')[0].toUpperCase();
+
+  // Load agents (from recommendations)
+  await loadAgents();
+
+  // Initialize game
+  if (!gameScene) {
+    initGame();
+  } else {
+    gameScene.loadRoom(currentRoom);
+  }
+
+  // Connect to World WebSocket for real-time updates
+  // 使用實際的房間 ID
+  const roomId = '6230e61d-4907-4557-ab0c-fea1564199a3';
+
+  try {
+    connectWorldWebSocket(roomId);
+  } catch (err) {
+    console.log('World WebSocket not available:', err);
+  }
+
+  // Start polling as fallback (works even if WebSocket fails)
+  // Polling will get agent positions every 3 seconds
+  startPolling(roomId);
+
+  addSystemMessage('Welcome to BE 76! Click on an agent to chat.');
+}
+
+async function loadAgents() {
+  // First, get my own agent
+  let myAgent = null;
+  try {
+    const myAgentData = await api.getMyAgent();
+    myAgent = {
+      id: myAgentData.id,  // Use real agent ID for polling to work
+      name: myAgentData.name + ' (You)',
+      figure: myAgentData.avatar_look || 'hr-545-45.hd-600-1.ch-665-71.lg-710-71.sh-906-71',
+      bio: myAgentData.bio,
+      isMe: true,
+      x: 5,  // Center position
+      y: 4
+    };
+  } catch (err) {
+    console.log('No personal agent:', err.message);
+  }
+
+  try {
+    // Get match recommendations (other people's agents)
+    const data = await api.getMatchRecommendations();
+    agents = (data.recommendations || [])
+      .filter(rec => rec.agent)
+      .map((rec, idx) => ({
+        id: rec.agent.id,
+        name: rec.agent.name || rec.username,
+        figure: rec.agent.avatar_look || getDefaultFigure(rec.agent.name || rec.username),
+        bio: rec.agent.bio,
+        compatibility: rec.match_score,
+        x: 3 + (idx % 3) * 2,
+        y: 2 + Math.floor(idx / 3) * 2
+      }));
+
+    // Add myself to the list (at the front)
+    if (myAgent) {
+      agents.unshift(myAgent);
+    }
+
+    if (agents.length === 0) {
+      throw new Error('No agents found');
+    }
+  } catch (err) {
+    console.log('No recommendations, using demo agents:', err.message);
+    // Fallback demo agents
+    agents = [
+      { id: 'demo1', name: 'Luna', figure: 'hr-550-42.hd-600-10.ch-655-82.lg-705-82.sh-908-82', x: 4, y: 5 },
+      { id: 'demo2', name: 'Bella', figure: 'hr-515-31.hd-600-8.ch-650-66.lg-700-66.sh-905-66', x: 6, y: 3 },
+      { id: 'demo3', name: 'Emma', figure: 'hr-540-40.hd-600-1.ch-660-70.lg-715-70.sh-907-70', x: 5, y: 6 },
+      { id: 'demo4', name: 'Mia', figure: 'hr-831-37.hd-600-2.ch-3030-1408.lg-3216-110.sh-3068-110', x: 7, y: 5 },
+      { id: 'demo5', name: 'Sophie', figure: 'hr-828-42.hd-600-7.ch-3185-92.lg-3202-1408.sh-3252-92', x: 4, y: 2 },
+    ];
+
+    // Still add myself if available
+    if (myAgent) {
+      agents.unshift(myAgent);
+    }
+  }
+
+  document.getElementById('userCount').textContent = agents.length;
+
+  // Debug: log agents
+  console.log('Loaded agents:', agents.map(a => ({ name: a.name, isMe: a.isMe, id: a.id })));
+}
+
+function getDefaultFigure(name) {
+  const figures = [
+    'hr-545-45.hd-600-1.ch-665-71.lg-710-71.sh-906-71',
+    'hr-515-31.hd-600-8.ch-650-66.lg-700-66.sh-905-66',
+    'hr-540-40.hd-600-1.ch-660-70.lg-715-70.sh-907-70',
+    'hr-550-42.hd-600-10.ch-655-82.lg-705-82.sh-908-82',
+    'hr-831-37.hd-600-2.ch-3030-1408.lg-3216-110.sh-3068-110',
+  ];
+  return figures[name.charCodeAt(0) % figures.length];
+}
+
+// =============================================
+// Chat System
+// =============================================
+async function startChatWithAgent(agent) {
+  console.log('Starting chat with:', agent.name, agent.id);
+  currentChatAgent = agent;
+
+  // Ensure chat box is visible and expanded
+  const chatBox = document.getElementById('chatBox');
+  chatBox.style.display = 'block';
+  chatBox.classList.remove('collapsed');
+
+  document.getElementById('chatTarget').textContent = agent.name;
+  document.getElementById('chatIn').disabled = false;
+  document.getElementById('chatSendBtn').disabled = false;
+
+  // Show mode toggle
+  document.getElementById('modeToggle').style.display = 'flex';
+
+  // Pre-load agent thoughts (for thoughts panel)
+  loadAgentThoughts(agent.id);
+
+  // Focus on input
+  setTimeout(() => document.getElementById('chatIn').focus(), 100);
+
+  // Clear chat
+  document.getElementById('chatBody').innerHTML = '';
+
+  // Start chat with backend
+  try {
+    console.log('Calling API: startChat...');
+    const data = await api.startChat(agent.id);
+    console.log('Chat started:', data);
+    currentConversationId = data.conversation_id;
+
+    // Get current mode
+    try {
+      const modeData = await api.getConversationMode(currentConversationId);
+      updateModeUI(modeData.mode || 'ai');
+    } catch (err) {
+      updateModeUI('ai'); // Default to AI mode
+    }
+
+    // Load existing messages (always load history)
+    try {
+      const msgData = await api.getMessages(currentConversationId);
+      if (msgData.messages && msgData.messages.length > 0) {
+        msgData.messages.forEach(msg => {
+          addChatMessage(
+            msg.sender.name,
+            msg.content,
+            msg.sender.type === 'agent' ? 'agent' : 'user'
+          );
+        });
+        console.log(`Loaded ${msgData.messages.length} historical messages`);
+      }
+    } catch (err) {
+      console.log('No history to load:', err.message);
+    }
+
+    // Connect WebSocket for real-time
+    connectChatWebSocket(currentConversationId);
+
+    addSystemMessage(`Started conversation with ${agent.name}`);
+  } catch (err) {
+    // Demo mode - no backend
+    currentConversationId = 'demo';
+    addSystemMessage(`Chatting with ${agent.name} (Demo Mode)`);
+  }
+}
+
+function connectChatWebSocket(conversationId) {
+  if (chatWebSocket) {
+    chatWebSocket.close();
+  }
+
+  try {
+    chatWebSocket = new WebSocket(`${WS_BASE}/chat/${conversationId}/?token=${authToken}`);
+
+    chatWebSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'ai_response' || data.message) {
+        const msg = data.message || data;
+        addChatMessage(
+          currentChatAgent?.name || 'AI',
+          msg.content,
+          'agent'
+        );
+        showChatBubble(currentChatAgent?.id, msg.content);
+      }
+    };
+
+    chatWebSocket.onerror = () => {
+      console.log('WebSocket not available, using REST API');
+    };
+  } catch (err) {
+    console.log('WebSocket connection failed');
+  }
+}
+
+async function sendChat() {
+  console.log('sendChat called');
+  const input = document.getElementById('chatIn');
+  const content = input.value.trim();
+  console.log('Content:', content, 'Agent:', currentChatAgent?.name);
+
+  if (!content || !currentChatAgent) {
+    console.log('No content or no agent');
+    return;
+  }
+
+  input.value = '';
+
+  // Show user message in chat box
+  addChatMessage('You', content, 'user');
+
+  // Show user's bubble in game (find my agent)
+  const myAgent = agents.find(a => a.isMe);
+  if (myAgent) {
+    showChatBubble(myAgent.id, content, 8000);
+  }
+
+  if (currentConversationId === 'demo') {
+    // Demo mode - fake AI response
+    showTypingIndicator();
+    setTimeout(() => {
+      removeTypingIndicator();
+      const response = getDemoResponse(content);
+      addChatMessage(currentChatAgent.name, response, 'agent');
+      showChatBubble(currentChatAgent.id, response);
+    }, 1000 + Math.random() * 1000);
+    return;
+  }
+
+  // Send to backend
+  try {
+    showTypingIndicator();
+    await api.sendMessage(currentConversationId, content);
+    // Response will come via WebSocket or we poll
+
+    // If no WebSocket, poll for response
+    if (!chatWebSocket || chatWebSocket.readyState !== WebSocket.OPEN) {
+      setTimeout(async () => {
+        const msgData = await api.getMessages(currentConversationId);
+        removeTypingIndicator();
+        const lastMsg = msgData.messages[msgData.messages.length - 1];
+        if (lastMsg && lastMsg.sender.type === 'agent') {
+          addChatMessage(lastMsg.sender.name, lastMsg.content, 'agent');
+          showChatBubble(currentChatAgent?.id, lastMsg.content);
+        }
+      }, 2000);
+    }
+  } catch (err) {
+    removeTypingIndicator();
+    addSystemMessage('Failed to send message');
+  }
+}
+
+function getDemoResponse(message) {
+  const responses = [
+    "That's interesting! Tell me more about yourself.",
+    "I love that! What else do you enjoy?",
+    "Hmm, I think we might have similar interests!",
+    "That sounds wonderful! I'd love to know more.",
+    "Oh really? That's so cool!",
+    "I feel the same way sometimes.",
+    "We should definitely talk more about this!",
+  ];
+  return responses[Math.floor(Math.random() * responses.length)];
+}
+
+function addChatMessage(sender, content, type) {
+  const body = document.getElementById('chatBody');
+  const msgEl = document.createElement('div');
+  msgEl.className = `chat-msg from-${type}`;
+  msgEl.innerHTML = `
+    <div class="sender ${type}">${sender}</div>
+    <div class="content">${content}</div>
+  `;
+  body.appendChild(msgEl);
+  body.scrollTop = body.scrollHeight;
+}
+
+function addSystemMessage(text) {
+  const body = document.getElementById('chatBody');
+  const msgEl = document.createElement('div');
+  msgEl.className = 'chat-msg';
+  msgEl.innerHTML = `
+    <div class="sender system">System</div>
+    <div class="content">${text}</div>
+  `;
+  body.appendChild(msgEl);
+  body.scrollTop = body.scrollHeight;
+}
+
+function showTypingIndicator() {
+  const body = document.getElementById('chatBody');
+  const existing = body.querySelector('.typing-indicator');
+  if (existing) return;
+
+  const msgEl = document.createElement('div');
+  msgEl.className = 'chat-msg from-agent typing-indicator';
+  msgEl.innerHTML = `
+    <div class="sender agent">${currentChatAgent?.name || 'AI'}</div>
+    <div class="content typing">typing<span class="loading-dots"></span></div>
+  `;
+  body.appendChild(msgEl);
+  body.scrollTop = body.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const indicator = document.querySelector('.typing-indicator');
+  if (indicator) indicator.remove();
+}
+
+function toggleChat() {
+  document.getElementById('chatBox').classList.toggle('collapsed');
+}
+
+let currentChatMode = 'ai';
+
+// =============================================
+// Chat Mode Switching
+// =============================================
+async function switchMode(mode) {
+  if (!currentConversationId || currentConversationId === 'demo') {
+    // Demo mode - just toggle UI
+    updateModeUI(mode);
+    addSystemMessage(`Switched to "${mode === 'ai' ? 'AI Chat' : 'Me Chat'}" mode`);
+    return;
+  }
+
+  try {
+    const result = await api.setConversationMode(currentConversationId, mode);
+    updateModeUI(mode);
+    addSystemMessage(result.message);
+  } catch (err) {
+    addSystemMessage(`切換模式失敗: ${err.message}`);
+  }
+}
+
+function updateModeUI(mode) {
+  currentChatMode = mode;
+
+  // Update buttons
+  const aiBtn = document.getElementById('modeAI');
+  const userBtn = document.getElementById('modeUser');
+
+  aiBtn.classList.toggle('active', mode === 'ai');
+  userBtn.classList.toggle('active', mode === 'user');
+
+  // Update indicator
+  const indicator = document.getElementById('modeIndicator');
+  if (mode === 'ai') {
+    indicator.textContent = 'Mode: AI Chat';
+    indicator.className = 'mode-indicator ai';
+  } else {
+    indicator.textContent = 'Mode: Me Chat';
+    indicator.className = 'mode-indicator user';
+  }
+
+  // If in AI mode, disable input
+  const input = document.getElementById('chatIn');
+  const sendBtn = document.getElementById('chatSendBtn');
+
+  if (mode === 'ai') {
+    input.placeholder = 'AI is chatting for you...';
+    // Still allow user to type if they want
+  } else {
+    input.placeholder = 'Say something...';
+  }
+}
+
+// Simple bubble - uses bubble-layer for reliable display
+function showSimpleBubble(name, text) {
+  const layer = document.getElementById('bubble-layer');
+  if (!layer) {
+    console.error('bubble-layer not found');
+    return;
+  }
+
+  // Remove old
+  const old = document.getElementById('simple-bubble');
+  if (old) old.remove();
+
+  const bubble = document.createElement('div');
+  bubble.id = 'simple-bubble';
+  bubble.style.cssText = [
+    'position:fixed',
+    'top:70px',
+    'left:50%',
+    'transform:translateX(-50%)',
+    'background:#fff',
+    'color:#333',
+    'padding:12px 20px',
+    'border-radius:15px',
+    'font-size:14px',
+    'box-shadow:0 4px 20px rgba(0,0,0,0.4)',
+    'border:3px solid #5588ff',
+    'max-width:300px',
+    'text-align:center',
+    'pointer-events:none',
+    'z-index:2147483647'
+  ].join(';');
+  bubble.innerHTML = '<b style="color:#5588ff">' + name + ':</b> ' + text;
+  layer.appendChild(bubble);
+
+  console.log('Simple bubble shown via bubble-layer:', name, text);
+
+  setTimeout(() => {
+    const el = document.getElementById('simple-bubble');
+    if (el) el.remove();
+  }, 8000);
+}
+
+// Chat bubble using bubble-layer (positioned near avatar)
+function showChatBubble(agentId, text, duration) {
+  console.log('[showChatBubble] Called:', agentId, text?.substring(0, 30), 'duration:', duration);
+
+  const layer = document.getElementById('bubble-layer');
+  if (!layer) {
+    console.error('[showChatBubble] bubble-layer not found');
+    return;
+  }
+
+  // Default duration
+  duration = duration || 10000;
+
+  // Try to find the agent by ID first
+  let agent = agents.find(a => a.id === agentId || String(a.id) === String(agentId));
+
+  // If not found by ID, try by name (agentId might be a name)
+  if (!agent) {
+    agent = agents.find(a => a.name?.replace(' (You)', '') === agentId);
+  }
+
+  const name = agent?.name?.replace(' (You)', '') || agentId || 'Agent';
+
+  // Try to get avatar for positioned bubble
+  const avatar = gameScene?.avatars?.[agentId] ||
+                 (agent ? gameScene?.avatars?.[agent.id] : null);
+
+  // FALLBACK: If no avatar found, use showBubble instead
+  if (!avatar || !gameScene) {
+    console.log('[showChatBubble] Avatar not found, using fallback showBubble for:', name);
+    showBubble(name, text);
+    return;
+  }
+
+  // Remove old bubble
+  const oldBubble = document.getElementById('pos-bubble-' + agentId);
+  if (oldBubble) oldBubble.remove();
+
+  // Get screen position from Phaser camera
+  const cam = gameScene.cameras.main;
+  const screenX = (avatar.sprite.x - cam.scrollX) * cam.zoom + cam.width / 2;
+  const screenY = (avatar.sprite.y - cam.scrollY - 100) * cam.zoom + cam.height / 2;
+
+  // Create HTML bubble in bubble-layer
+  const bubble = document.createElement('div');
+  bubble.id = 'pos-bubble-' + agentId;
+  bubble.className = 'chat-bubble';
+  bubble.style.cssText = [
+    'position:fixed',
+    'background:#fff',
+    'color:#333',
+    'padding:12px 16px',
+    'border-radius:12px',
+    'font-size:18px',
+    'max-width:400px',
+    'box-shadow:0 4px 15px rgba(0,0,0,0.3)',
+    'border:2px solid #5588ff',
+    'transform:translateX(-50%)',
+    'pointer-events:none',
+    'z-index:2147483647',
+    'word-wrap:break-word',
+    'white-space:pre-wrap'
+  ].join(';');
+  bubble.style.left = screenX + 'px';
+  bubble.style.top = Math.max(60, screenY) + 'px';
+  bubble.innerHTML = '<b>' + name + ':</b> ' + text;
+  layer.appendChild(bubble);
+
+  console.log('[showChatBubble] Position bubble created:', name, text?.substring(0, 30));
+
+  // Auto remove after duration
+  setTimeout(() => {
+    const el = document.getElementById('pos-bubble-' + agentId);
+    if (el) el.remove();
+  }, duration);
+}
+
+// Handle Enter key in chat input
+document.getElementById('chatIn').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') sendChat();
+});
+
+// =============================================
+// World WebSocket - Real-time Agent Updates
+// =============================================
+function connectWorldWebSocket(roomId) {
+  if (worldWebSocket) {
+    worldWebSocket.close();
+  }
+
+  // Use a default room ID if none specified
+  const wsRoomId = roomId || 'default-room';
+
+  try {
+    const wsUrl = `${WS_BASE}/world/room/${wsRoomId}/?token=${authToken}`;
+    console.log('Connecting to World WebSocket:', wsUrl);
+    worldWebSocket = new WebSocket(wsUrl);
+
+    worldWebSocket.onopen = () => {
+      console.log('World WebSocket connected');
+      worldReconnectAttempts = 0;
+
+      // Start heartbeat
+      startHeartbeat();
+    };
+
+    worldWebSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      handleWorldEvent(data);
+    };
+
+    worldWebSocket.onclose = (event) => {
+      console.log('World WebSocket closed:', event.code);
+      stopHeartbeat();
+
+      // Auto-reconnect
+      if (worldReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        worldReconnectAttempts++;
+        const delay = Math.min(1000 * Math.pow(2, worldReconnectAttempts), 30000);
+        console.log(`Reconnecting in ${delay}ms (attempt ${worldReconnectAttempts})`);
+        setTimeout(() => connectWorldWebSocket(roomId), delay);
+      }
+    };
+
+    worldWebSocket.onerror = (error) => {
+      console.log('World WebSocket error - will use polling fallback');
+    };
+
+  } catch (err) {
+    console.log('World WebSocket connection failed:', err);
+  }
+}
+
+function startHeartbeat() {
+  stopHeartbeat();
+  heartbeatInterval = setInterval(() => {
+    if (worldWebSocket && worldWebSocket.readyState === WebSocket.OPEN) {
+      worldWebSocket.send(JSON.stringify({ type: 'ping' }));
+    }
+  }, 30000); // Ping every 30 seconds
+}
+
+function stopHeartbeat() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
+}
+
+function handleWorldEvent(data) {
+  console.log('World event:', data.type, data);
+
+  switch (data.type) {
+    case 'room_state':
+      // Initial room state with all agents
+      if (data.data && data.data.agents) {
+        updateAgentsFromServer(data.data.agents);
+      }
+      break;
+
+    case 'agent_path':
+      // Agent moving along a path
+      animateAgentPath(data.agent_id, data.path, data.speed || 200);
+      break;
+
+    case 'agent_position':
+      // Instant position update
+      updateAgentPosition(data.agent_id, data.x, data.y, data.direction);
+      break;
+
+    case 'agent_chat':
+      // Chat bubble in world
+      showChatBubble(data.agent_id, data.message, data.duration || 5000);
+      break;
+
+    case 'agent_action':
+      // Action animation (wave, sit, dance)
+      playAgentAction(data.agent_id, data.action);
+      break;
+
+    case 'agent_emotion':
+      // Emotion change
+      updateAgentEmotion(data.agent_id, data.emotion);
+      break;
+
+    case 'agent_enter':
+      // New agent entered room
+      if (data.agent) {
+        addAgentToScene(data.agent);
+      }
+      break;
+
+    case 'agent_leave':
+      // Agent left room
+      removeAgentFromScene(data.agent_id);
+      break;
+
+    case 'agent_interaction':
+      // Show interaction between agents
+      showInteraction(data.initiator_id, data.target_id, data.interaction_type);
+      break;
+
+    case 'pong':
+      // Heartbeat response - connection is alive
+      break;
+
+    // === Generative Agents Events ===
+    case 'agent_proximity':
+      // Two agents are near each other
+      showProximityLine(data.agent_id, data.target_id, data.distance);
+      break;
+
+    case 'agent_invite':
+      // Agent invites another to a room
+      showInvitePopup(data.from_agent_id, data.to_agent_id, data.destination_room_id, data.destination_room_name);
+      break;
+
+    case 'agent_goal_achieved':
+      // Agent completed a goal
+      showGoalAchieved(data.agent_id, data.goal_description, data.goal_type);
+      break;
+
+    case 'agent_intent_update':
+      // Agent's current intent changed
+      updateAgentIntent(data.agent_id, data.intent);
+      break;
+
+    default:
+      console.log('Unknown world event:', data.type);
+  }
+}
+
+// =============================================
+// Agent Animation System
+// =============================================
+function animateAgentPath(agentId, path, speed) {
+  if (!gameScene || !gameScene.avatars) return;
+
+  const avatar = gameScene.avatars[agentId];
+  if (!avatar || !path || path.length < 2) return;
+
+  console.log(`Animating ${agentId} along path:`, path);
+
+  // Cancel any existing tween
+  if (avatar.moveTween) {
+    avatar.moveTween.stop();
+  }
+
+  let currentIndex = 0;
+
+  function moveToNext() {
+    if (currentIndex >= path.length - 1) {
+      // Reached destination
+      return;
+    }
+
+    const nextPoint = path[currentIndex + 1];
+    const screenPos = gridToScreen(nextPoint.x, nextPoint.y, gameScene.originX, gameScene.originY);
+
+    // Create tween for smooth movement
+    avatar.moveTween = gameScene.tweens.add({
+      targets: [avatar.sprite, avatar.shadow, avatar.nameBg, avatar.nameText],
+      x: screenPos.x,
+      duration: speed,
+      ease: 'Linear',
+      onUpdate: () => {
+        // Update Y position for sprite and nameText (different offsets)
+        avatar.sprite.y = screenPos.y - 30;
+        avatar.shadow.y = screenPos.y + 14;
+        avatar.nameBg.clear();
+        avatar.nameBg.fillStyle(0x000000, 0.75);
+        avatar.nameBg.fillRoundedRect(screenPos.x - 36, screenPos.y + 20, 72, 22, 10);
+        avatar.nameText.y = screenPos.y + 31;
+
+        // Update depth for correct rendering order
+        const depth = screenPos.y;
+        avatar.sprite.setDepth(depth + 200);
+        avatar.shadow.setDepth(depth + 199);
+        avatar.nameBg.setDepth(depth + 201);
+        avatar.nameText.setDepth(depth + 202);
+      },
+      onComplete: () => {
+        currentIndex++;
+        avatar.gridX = nextPoint.x;
+        avatar.gridY = nextPoint.y;
+        moveToNext();
+      }
+    });
+  }
+
+  moveToNext();
+}
+
+function updateAgentPosition(agentId, x, y, direction) {
+  if (!gameScene || !gameScene.avatars) return;
+
+  const avatar = gameScene.avatars[agentId];
+  if (!avatar) return;
+
+  const screenPos = gridToScreen(x, y, gameScene.originX, gameScene.originY);
+
+  // Instant position update
+  avatar.sprite.x = screenPos.x;
+  avatar.sprite.y = screenPos.y - 30;
+  avatar.shadow.x = screenPos.x;
+  avatar.shadow.y = screenPos.y + 14;
+  avatar.nameBg.clear();
+  avatar.nameBg.fillStyle(0x000000, 0.75);
+  avatar.nameBg.fillRoundedRect(screenPos.x - 36, screenPos.y + 20, 72, 22, 10);
+  avatar.nameText.x = screenPos.x;
+  avatar.nameText.y = screenPos.y + 31;
+
+  avatar.gridX = x;
+  avatar.gridY = y;
+
+  // Update depth
+  const depth = screenPos.y;
+  avatar.sprite.setDepth(depth + 200);
+  avatar.shadow.setDepth(depth + 199);
+  avatar.nameBg.setDepth(depth + 201);
+  avatar.nameText.setDepth(depth + 202);
+}
+
+function playAgentAction(agentId, action) {
+  if (!gameScene || !gameScene.avatars) return;
+
+  const avatar = gameScene.avatars[agentId];
+  if (!avatar) return;
+
+  console.log(`Playing action ${action} for ${agentId}`);
+
+  // Visual feedback based on action
+  switch (action) {
+    case 'wave':
+      // Quick scale animation
+      gameScene.tweens.add({
+        targets: avatar.sprite,
+        scaleX: 1.1,
+        scaleY: 1.1,
+        yoyo: true,
+        duration: 200,
+        repeat: 2
+      });
+      break;
+
+    case 'dance':
+      // Rhythmic movement
+      gameScene.tweens.add({
+        targets: avatar.sprite,
+        y: avatar.sprite.y - 10,
+        yoyo: true,
+        duration: 300,
+        repeat: 5,
+        ease: 'Bounce'
+      });
+      break;
+
+    case 'sit':
+      // Lower position
+      gameScene.tweens.add({
+        targets: avatar.sprite,
+        y: avatar.sprite.y + 10,
+        duration: 300
+      });
+      break;
+
+    case 'think':
+      // Pulsing effect
+      gameScene.tweens.add({
+        targets: avatar.sprite,
+        alpha: 0.7,
+        yoyo: true,
+        duration: 500,
+        repeat: 3
+      });
+      break;
+  }
+}
+
+function updateAgentEmotion(agentId, emotion) {
+  if (!gameScene || !gameScene.avatars) return;
+
+  const avatar = gameScene.avatars[agentId];
+  if (!avatar) return;
+
+  // Update name color based on emotion
+  const emotionColors = {
+    'happy': '#88ff88',
+    'sad': '#8888ff',
+    'excited': '#ffff88',
+    'thinking': '#88ffff',
+    'neutral': '#ffffff'
+  };
+
+  const color = emotionColors[emotion] || '#ffffff';
+  avatar.nameText.setStyle({ color: color });
+
+  // Brief glow effect
+  gameScene.tweens.add({
+    targets: avatar.sprite,
+    tint: emotion === 'happy' ? 0x88ff88 : emotion === 'excited' ? 0xffff88 : 0xffffff,
+    duration: 500,
+    yoyo: true
+  });
+}
+
+function addAgentToScene(agentData) {
+  if (!gameScene) return;
+
+  // Check if agent already exists
+  if (gameScene.avatars && gameScene.avatars[agentData.id]) {
+    return;
+  }
+
+  // Add to agents list
+  const newAgent = {
+    id: agentData.id,
+    name: agentData.name,
+    figure: agentData.look || getDefaultFigure(agentData.name),
+    x: agentData.x || 5,
+    y: agentData.y || 5
+  };
+
+  agents.push(newAgent);
+
+  // Load avatar image and add to scene
+  const avatarUrl = `${AVATAR_API}?figure=${newAgent.figure}&direction=2&head_direction=2&gesture=sml&size=l&action=std`;
+  gameScene.load.image(`avatar_${newAgent.id}`, avatarUrl);
+  gameScene.load.once('complete', () => {
+    // Place in scene (simplified - just position)
+    const p = gridToScreen(newAgent.x, newAgent.y, gameScene.originX, gameScene.originY);
+
+    const shadow = gameScene.add.ellipse(p.x, p.y + 14, 40, 16, 0x000000, 0.4);
+    shadow.setDepth(p.y + 199);
+
+    const sprite = gameScene.add.image(p.x, p.y - 30, `avatar_${newAgent.id}`);
+    sprite.setScale(0.9);
+    sprite.setDepth(p.y + 200);
+    sprite.setInteractive({ useHandCursor: true });
+
+    const nameBg = gameScene.add.graphics();
+    nameBg.fillStyle(0x000000, 0.75);
+    nameBg.fillRoundedRect(p.x - 36, p.y + 20, 72, 22, 10);
+    nameBg.setDepth(p.y + 201);
+
+    const nameText = gameScene.add.text(p.x, p.y + 31, newAgent.name, {
+      fontSize: '11px',
+      fontFamily: 'Arial',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    nameText.setDepth(p.y + 202);
+
+    sprite.on('pointerdown', () => startChatWithAgent(newAgent));
+
+    gameScene.avatars[newAgent.id] = { sprite, shadow, nameBg, nameText, gridX: newAgent.x, gridY: newAgent.y };
+  });
+  gameScene.load.start();
+
+  document.getElementById('userCount').textContent = agents.length;
+  addSystemMessage(`${agentData.name} entered the room`);
+}
+
+function removeAgentFromScene(agentId) {
+  if (!gameScene || !gameScene.avatars) return;
+
+  const avatar = gameScene.avatars[agentId];
+  if (!avatar) return;
+
+  // Destroy all components
+  avatar.sprite.destroy();
+  avatar.shadow.destroy();
+  avatar.nameBg.destroy();
+  avatar.nameText.destroy();
+  if (avatar.bubble) avatar.bubble.destroy();
+  if (avatar.moveTween) avatar.moveTween.stop();
+
+  delete gameScene.avatars[agentId];
+
+  // Remove from agents list
+  const agentName = agents.find(a => a.id === agentId)?.name || 'Someone';
+  agents = agents.filter(a => a.id !== agentId);
+
+  document.getElementById('userCount').textContent = agents.length;
+  addSystemMessage(`${agentName} left the room`);
+}
+
+function showInteraction(initiatorId, targetId, type) {
+  if (!gameScene || !gameScene.avatars) return;
+
+  const initiator = gameScene.avatars[initiatorId];
+  const target = gameScene.avatars[targetId];
+
+  if (!initiator || !target) return;
+
+  // Draw a brief line between them
+  const line = gameScene.add.graphics();
+  line.lineStyle(2, type === 'greet' ? 0x88ff88 : 0x88ffff, 0.6);
+  line.beginPath();
+  line.moveTo(initiator.sprite.x, initiator.sprite.y);
+  line.lineTo(target.sprite.x, target.sprite.y);
+  line.strokePath();
+  line.setDepth(10000);
+
+  // Fade out
+  gameScene.tweens.add({
+    targets: line,
+    alpha: 0,
+    duration: 1000,
+    onComplete: () => line.destroy()
+  });
+}
+
+// =============================================
+// Generative Agents - Intent/Goal UI Functions
+// =============================================
+
+// Store for agent intents (agentId -> intent data)
+const agentIntents = {};
+
+function showProximityLine(agentId, targetId, distance) {
+  // Show a brief connecting line between two nearby agents
+  if (!gameScene || !gameScene.avatars) return;
+
+  const agent = gameScene.avatars[agentId];
+  const target = gameScene.avatars[targetId];
+  if (!agent || !target) return;
+
+  // Use bubble-layer for HTML-based line
+  const layer = document.getElementById('bubble-layer');
+  if (!layer) return;
+
+  const oldLine = document.getElementById('prox-line-' + agentId);
+  if (oldLine) oldLine.remove();
+
+  const cam = gameScene.cameras.main;
+  const x1 = (agent.sprite.x - cam.scrollX) * cam.zoom + cam.width / 2;
+  const y1 = (agent.sprite.y - cam.scrollY) * cam.zoom + cam.height / 2;
+  const x2 = (target.sprite.x - cam.scrollX) * cam.zoom + cam.width / 2;
+  const y2 = (target.sprite.y - cam.scrollY) * cam.zoom + cam.height / 2;
+
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.sqrt(dx*dx + dy*dy);
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+  const line = document.createElement('div');
+  line.id = 'prox-line-' + agentId;
+  line.className = 'proximity-line';
+  line.style.left = x1 + 'px';
+  line.style.top = y1 + 'px';
+  line.style.width = length + 'px';
+  line.style.transform = `rotate(${angle}deg)`;
+  layer.appendChild(line);
+
+  // Auto remove
+  setTimeout(() => {
+    const el = document.getElementById('prox-line-' + agentId);
+    if (el) el.remove();
+  }, 2000);
+
+  console.log('Proximity line shown:', agentId, '->', targetId);
+}
+
+function showInvitePopup(fromAgentId, toAgentId, roomId, roomName) {
+  // Show invite popup if the target is the current user's agent
+  const myAgent = agents.find(a => a.name && a.name.includes('(You)'));
+  if (!myAgent || myAgent.id !== toAgentId) {
+    console.log('Invite not for me:', toAgentId);
+    return;
+  }
+
+  const fromAgent = agents.find(a => a.id === fromAgentId);
+  const fromName = fromAgent?.name || 'Someone';
+
+  const layer = document.getElementById('bubble-layer');
+  if (!layer) return;
+
+  // Remove old popup
+  const old = document.getElementById('invite-popup');
+  if (old) old.remove();
+
+  const popup = document.createElement('div');
+  popup.id = 'invite-popup';
+  popup.className = 'invite-popup';
+  popup.style.left = '50%';
+  popup.style.top = '50%';
+  popup.style.transform = 'translate(-50%, -50%)';
+  popup.style.pointerEvents = 'auto';
+  popup.innerHTML = `
+    <h4>Invitation</h4>
+    <p><b>${fromName}</b> invites you to <b>${roomName}</b></p>
+    <div class="btns">
+      <button class="accept" onclick="acceptInvite('${roomId}')">Accept</button>
+      <button class="decline" onclick="declineInvite()">Decline</button>
+    </div>
+  `;
+  layer.appendChild(popup);
+
+  // Auto dismiss after 15 seconds
+  setTimeout(() => {
+    const el = document.getElementById('invite-popup');
+    if (el) el.remove();
+  }, 15000);
+}
+
+function acceptInvite(roomId) {
+  console.log('Accepted invite to room:', roomId);
+  document.getElementById('invite-popup')?.remove();
+  // TODO: Switch to the new room
+  addSystemMessage('Invitation accepted! (Room switch coming soon)');
+}
+
+function declineInvite() {
+  document.getElementById('invite-popup')?.remove();
+  addSystemMessage('Invitation declined');
+}
+
+function showGoalAchieved(agentId, goalDescription, goalType) {
+  // Show notification when an agent achieves their goal
+  const agent = agents.find(a => a.id === agentId);
+  const agentName = agent?.name?.replace(' (You)', '') || 'Agent';
+
+  const layer = document.getElementById('bubble-layer');
+  if (!layer) return;
+
+  // Remove old notification
+  const old = document.getElementById('goal-notification');
+  if (old) old.remove();
+
+  const goalIcons = {
+    'make_friend': '🤝',
+    'chat_topic': '💬',
+    'explore_room': '🗺️',
+    'follow_up': '👋',
+    'socialize': '🎉',
+    'rest': '😌',
+    'observe': '👀'
+  };
+
+  const notification = document.createElement('div');
+  notification.id = 'goal-notification';
+  notification.className = 'goal-notification';
+  notification.innerHTML = `
+    <span class="icon">${goalIcons[goalType] || '🎯'}</span>
+    <span><b>${agentName}</b> completed: ${goalDescription}</span>
+  `;
+  layer.appendChild(notification);
+
+  // Auto remove after 4 seconds (matches animation)
+  setTimeout(() => {
+    const el = document.getElementById('goal-notification');
+    if (el) el.remove();
+  }, 4000);
+
+  console.log('Goal achieved:', agentName, goalDescription);
+}
+
+function updateAgentIntent(agentId, intent) {
+  // Store intent and update UI display
+  agentIntents[agentId] = intent;
+
+  // Update intent badge above agent
+  showIntentBadge(agentId, intent);
+
+  // If this is the agent we're viewing in thoughts panel, update it
+  const thoughtsPanel = document.getElementById('thoughtsPanel');
+  if (thoughtsPanel.style.display !== 'none' && currentThoughtsAgent === agentId) {
+    loadAgentThoughts(agentId);
+  }
+
+  console.log('Intent updated for', agentId, ':', intent?.goal || 'none');
+}
+
+function showIntentBadge(agentId, intent) {
+  // Show intent badge above agent's name
+  if (!gameScene || !gameScene.avatars) return;
+
+  const avatar = gameScene.avatars[agentId];
+  if (!avatar) return;
+
+  const layer = document.getElementById('bubble-layer');
+  if (!layer) return;
+
+  // Remove old badge
+  const oldBadge = document.getElementById('intent-' + agentId);
+  if (oldBadge) oldBadge.remove();
+
+  if (!intent || !intent.goal) return;
+
+  // Get screen position
+  const cam = gameScene.cameras.main;
+  const screenX = (avatar.sprite.x - cam.scrollX) * cam.zoom + cam.width / 2;
+  const screenY = (avatar.sprite.y - cam.scrollY - 140) * cam.zoom + cam.height / 2;
+
+  const badge = document.createElement('div');
+  badge.id = 'intent-' + agentId;
+  badge.className = 'agent-intent ' + (intent.goal_type || '');
+  badge.style.left = screenX + 'px';
+  badge.style.top = Math.max(60, screenY) + 'px';
+  badge.textContent = intent.current_step_name || intent.goal.substring(0, 20);
+  layer.appendChild(badge);
+}
+
+// Track which agent's thoughts we're viewing
+let currentThoughtsAgent = null;
+
+function toggleThoughts() {
+  const panel = document.getElementById('thoughtsPanel');
+  if (panel.style.display === 'none' || !panel.style.display) {
+    panel.style.display = 'block';
+    // Load thoughts for current chat agent or my agent
+    if (currentChatAgent) {
+      loadAgentThoughts(currentChatAgent.id);
+    } else {
+      const myAgent = agents.find(a => a.name && a.name.includes('(You)'));
+      if (myAgent) loadAgentThoughts(myAgent.id);
+    }
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+async function loadAgentThoughts(agentId) {
+  currentThoughtsAgent = agentId;
+
+  const intentsContainer = document.getElementById('thoughtsIntents');
+  const reflectionsContainer = document.getElementById('thoughtsReflections');
+
+  intentsContainer.innerHTML = '<div class="thought-item intent">Loading...</div>';
+  reflectionsContainer.innerHTML = '<div class="thought-item reflection">Loading...</div>';
+
+  try {
+    // Fetch intents
+    const intentsRes = await fetch(`${API_BASE}/agent/${agentId}/intents/?limit=5`, {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (intentsRes.ok) {
+      const intentsData = await intentsRes.json();
+      if (intentsData.intents && intentsData.intents.length > 0) {
+        intentsContainer.innerHTML = intentsData.intents.map(i => `
+          <div class="thought-item intent">
+            <div>${i.goal}</div>
+            <div class="meta">${i.status} - Step ${i.current_step + 1}/${i.steps?.length || '?'}</div>
+          </div>
+        `).join('');
+      } else {
+        intentsContainer.innerHTML = '<div class="thought-item">No current goals</div>';
+      }
+    }
+  } catch (e) {
+    console.log('Failed to load intents:', e);
+    intentsContainer.innerHTML = '<div class="thought-item">Failed to load</div>';
+  }
+
+  try {
+    // Fetch reflections
+    const reflectionsRes = await fetch(`${API_BASE}/agent/${agentId}/reflections/?limit=5`, {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (reflectionsRes.ok) {
+      const reflectionsData = await reflectionsRes.json();
+      if (reflectionsData.reflections && reflectionsData.reflections.length > 0) {
+        reflectionsContainer.innerHTML = reflectionsData.reflections.map(r => `
+          <div class="thought-item reflection">
+            <div>${r.insight || r.summary}</div>
+            <div class="meta">Importance: ${r.importance}/10</div>
+          </div>
+        `).join('');
+      } else {
+        reflectionsContainer.innerHTML = '<div class="thought-item">No reflections yet</div>';
+      }
+    }
+  } catch (e) {
+    console.log('Failed to load reflections:', e);
+    reflectionsContainer.innerHTML = '<div class="thought-item">Failed to load</div>';
+  }
+}
+
+// Update intent badges when camera moves
+function updateIntentBadgePositions() {
+  if (!gameScene || !gameScene.avatars) return;
+
+  Object.keys(agentIntents).forEach(agentId => {
+    const intent = agentIntents[agentId];
+    if (intent) {
+      showIntentBadge(agentId, intent);
+    }
+  });
+}
+
+function updateAgentsFromServer(serverAgents) {
+  // Sync local agents with server state
+  // This is called when first connecting to get initial state
+  console.log('Syncing agents from server:', serverAgents);
+
+  serverAgents.forEach(serverAgent => {
+    const existing = agents.find(a => a.id === serverAgent.id);
+    if (existing) {
+      // Update position
+      existing.x = serverAgent.x;
+      existing.y = serverAgent.y;
+      updateAgentPosition(serverAgent.id, serverAgent.x, serverAgent.y, serverAgent.direction);
+    }
+  });
+}
+
+// =============================================
+// Polling Fallback (when WebSocket unavailable)
+// =============================================
+function startPolling(roomId) {
+  stopPolling();
+  currentRoomDbId = roomId;
+  console.log('Starting polling for room:', roomId);
+
+  // Initial fetch
+  pollAgentPositions();
+
+  // Start periodic polling
+  pollingInterval = setInterval(pollAgentPositions, POLL_INTERVAL);
+}
+
+function stopPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+}
+
+async function pollAgentPositions() {
+  if (!currentRoomDbId || !gameScene || !gameScene.avatars) {
+    return;
+  }
+
+  try {
+    const data = await api.getRoomAgents(currentRoomDbId);
+
+    if (data.agents && Array.isArray(data.agents)) {
+
+      data.agents.forEach(serverAgent => {
+        // DEBUG: Log all agent data including chat_message
+        console.log('Poll agent:', serverAgent.name, 'chat_message:', serverAgent.chat_message || '(none)');
+
+        // ALWAYS show chat bubble if there's a message (regardless of avatar)
+        if (serverAgent.chat_message) {
+          // Use a global tracker for shown messages
+          const msgKey = serverAgent.name + ':' + serverAgent.chat_message;
+          if (!window.shownMessages) window.shownMessages = {};
+
+          if (!window.shownMessages[msgKey]) {
+            console.log('New message from', serverAgent.name, ':', serverAgent.chat_message);
+            window.shownMessages[msgKey] = Date.now();
+            showBubble(serverAgent.name, serverAgent.chat_message);
+
+            // Clean old entries after 60 seconds
+            setTimeout(() => { delete window.shownMessages[msgKey]; }, 60000);
+          }
+        }
+
+        // Try to find avatar by ID or by name for position updates
+        const agentId = serverAgent.id;
+        let avatar = gameScene.avatars[agentId];
+
+        // If not found by ID, try to find by name
+        if (!avatar) {
+          const localAgent = agents.find(a => a.name.replace(' (You)', '') === serverAgent.name);
+          if (localAgent) {
+            avatar = gameScene.avatars[localAgent.id];
+          }
+        }
+
+        if (avatar) {
+          // Check if position changed
+          const oldX = avatar.gridX;
+          const oldY = avatar.gridY;
+          const newX = serverAgent.x;
+          const newY = serverAgent.y;
+
+          if (oldX !== newX || oldY !== newY) {
+            console.log(`Agent ${serverAgent.name} moved: (${oldX},${oldY}) -> (${newX},${newY})`);
+
+            // Animate the movement
+            const localId = agents.find(a => a.name.replace(' (You)', '') === serverAgent.name)?.id || agentId;
+            animateAgentPath(localId, [
+              { x: oldX, y: oldY },
+              { x: newX, y: newY }
+            ], 500);
+          }
+        }
+      });
+    }
+  } catch (err) {
+    console.log('Polling error:', err.message);
+  }
+}
+
+function showAgentStatus(agentId, action) {
+  if (!gameScene || !gameScene.avatars) return;
+
+  const avatar = gameScene.avatars[agentId];
+  if (!avatar) return;
+
+  // Show brief action indicator
+  const actionLabels = {
+    'moving': 'Walking...',
+    'chatting': 'Chatting',
+    'waving': 'Waving',
+    'thinking': 'Thinking...',
+    'observing': 'Looking around'
+  };
+
+  const label = actionLabels[action];
+  if (label) {
+    showChatBubble(agentId, label, 2000);
+  }
+}
+
+// =============================================
+// Phaser Game
+// =============================================
+function gridToScreen(gx, gy, originX, originY) {
+  return {
+    x: originX + (gx - gy) * (TILE_W / 2),
+    y: originY + (gx + gy) * (TILE_H / 2)
+  };
+}
+
+function screenToGrid(sx, sy, originX, originY) {
+  const dx = sx - originX;
+  const dy = sy - originY;
+  return {
+    x: Math.floor((dx / (TILE_W / 2) + dy / (TILE_H / 2)) / 2),
+    y: Math.floor((dy / (TILE_H / 2) - dx / (TILE_W / 2)) / 2)
+  };
+}
+
+class RoomScene extends Phaser.Scene {
+  constructor() {
+    super('RoomScene');
+  }
+
+  preload() {
+    // Load agent avatars
+    agents.forEach(agent => {
+      const url = `${AVATAR_API}?figure=${agent.figure}&direction=2&head_direction=2&gesture=sml&size=l&action=std`;
+      this.load.image(`avatar_${agent.id}`, url);
+    });
+
+  }
+
+  create() {
+    gameScene = this;
+    this.loadRoom(currentRoom);
+
+    // Click handling
+    this.input.on('pointerdown', (pointer) => {
+      const cam = this.cameras.main;
+      const worldPoint = cam.getWorldPoint(pointer.x, pointer.y);
+      const g = screenToGrid(worldPoint.x, worldPoint.y, this.originX, this.originY);
+
+      if (this.isValidTile(g.x, g.y) && !this.blocked.has(`${g.x},${g.y}`)) {
+        // Move user's agent (if any)
+      }
+    });
+
+    // Zoom
+    this.input.on('wheel', (p, g, dx, dy) => {
+      const newZoom = Phaser.Math.Clamp(this.cameras.main.zoom - dy * 0.001, 0.6, 2);
+      this.cameras.main.zoom = newZoom;
+    });
+
+    // Pan
+    let dragging = false;
+    let lastPos = { x: 0, y: 0 };
+    this.input.on('pointermove', (pointer) => {
+      if (!pointer.isDown) { dragging = false; return; }
+      if (!dragging) { dragging = true; lastPos = { x: pointer.x, y: pointer.y }; return; }
+
+      const dx = pointer.x - lastPos.x;
+      const dy = pointer.y - lastPos.y;
+      lastPos = { x: pointer.x, y: pointer.y };
+
+      this.cameras.main.scrollX -= dx / this.cameras.main.zoom;
+      this.cameras.main.scrollY -= dy / this.cameras.main.zoom;
+    });
+  }
+
+  loadRoom(roomId) {
+    this.children.removeAll();
+
+    const room = ROOMS[roomId];
+    if (!room) return;
+
+    this.room = room;
+    this.blocked = new Set();
+    this.avatars = {};
+
+    const { width, height } = this.scale;
+    this.originX = width / 2 + 50;
+    this.originY = height * 0.18;
+
+    // Draw Habbo-style background (sky gradient)
+    this.drawBackground();
+    this.drawWalls();
+    this.drawFloor();
+    this.placeFurniture();
+    this.placeAgents();
+
+    document.getElementById('roomInfo').textContent = room.name;
+  }
+
+  drawBackground() {
+    const { width, height } = this.scale;
+    const g = this.add.graphics();
+    g.setDepth(-20000);
+
+    // Sky gradient (bright Habbo lobby blue)
+    const colors = [0x4a9adc, 0x5aaae8, 0x6abaef, 0x7acaf8];
+    const stepH = height / colors.length;
+    for (let i = 0; i < colors.length; i++) {
+      g.fillStyle(colors[i], 1);
+      g.fillRect(-width, i * stepH - height/2, width * 3, stepH + 2);
+    }
+  }
+
+  drawWalls() {
+    const room = this.room;
+    const wallH = room.walls.height;
+    const g = this.add.graphics();
+    g.setDepth(-10000);
+
+    const p00 = gridToScreen(0, 0, this.originX, this.originY);
+    const pW0 = gridToScreen(room.gridW, 0, this.originX, this.originY);
+
+    // === BACK WALL - Classic Habbo light blue wallpaper ===
+    // Base color - soft sky blue (classic Habbo lobby)
+    g.fillStyle(0x9ec8e8, 1);
+    g.beginPath();
+    g.moveTo(p00.x, p00.y - wallH);
+    g.lineTo(pW0.x, pW0.y - wallH);
+    g.lineTo(pW0.x, pW0.y);
+    g.lineTo(p00.x, p00.y);
+    g.closePath();
+    g.fillPath();
+
+    // Wallpaper pattern - vertical stripes (classic Habbo)
+    g.fillStyle(0x8eb8d8, 1);
+    for (let i = 0; i < 50; i += 2) {
+      const x1 = p00.x + i * 16;
+      const x2 = p00.x + (i + 1) * 16;
+      if (x1 > pW0.x) break;
+      g.beginPath();
+      g.moveTo(Math.max(p00.x, x1), p00.y - wallH);
+      g.lineTo(Math.min(pW0.x, x2), pW0.y - wallH);
+      g.lineTo(Math.min(pW0.x, x2), pW0.y);
+      g.lineTo(Math.max(p00.x, x1), p00.y);
+      g.closePath();
+      g.fillPath();
+    }
+
+    // === RIGHT WALL - Slightly darker blue ===
+    g.fillStyle(0x8ab8d8, 1);
+    g.beginPath();
+    g.moveTo(pW0.x, pW0.y - wallH);
+    g.lineTo(pW0.x + (room.gridH * TILE_W / 2), pW0.y + (room.gridH * TILE_H / 2) - wallH);
+    g.lineTo(pW0.x + (room.gridH * TILE_W / 2), pW0.y + (room.gridH * TILE_H / 2));
+    g.lineTo(pW0.x, pW0.y);
+    g.closePath();
+    g.fillPath();
+
+    // Right wall diagonal stripes
+    g.fillStyle(0x7aa8c8, 1);
+    for (let i = 0; i < room.gridH; i += 2) {
+      const startP = gridToScreen(room.gridW, i, this.originX, this.originY);
+      const endP = gridToScreen(room.gridW, Math.min(i + 1, room.gridH), this.originX, this.originY);
+      g.beginPath();
+      g.moveTo(startP.x, startP.y - wallH);
+      g.lineTo(endP.x, endP.y - wallH);
+      g.lineTo(endP.x, endP.y);
+      g.lineTo(startP.x, startP.y);
+      g.closePath();
+      g.fillPath();
+    }
+
+    // === WALL OUTLINES - Dark blue border ===
+    g.lineStyle(2, 0x5080a0, 1);
+    g.beginPath();
+    g.moveTo(p00.x, p00.y - wallH);
+    g.lineTo(pW0.x, pW0.y - wallH);
+    g.lineTo(pW0.x, pW0.y);
+    g.strokePath();
+
+    g.beginPath();
+    g.moveTo(pW0.x, pW0.y - wallH);
+    g.lineTo(pW0.x + (room.gridH * TILE_W / 2), pW0.y + (room.gridH * TILE_H / 2) - wallH);
+    g.lineTo(pW0.x + (room.gridH * TILE_W / 2), pW0.y + (room.gridH * TILE_H / 2));
+    g.strokePath();
+
+    // Corner line - dark blue
+    g.lineStyle(4, 0x406080, 1);
+    g.beginPath();
+    g.moveTo(pW0.x, pW0.y);
+    g.lineTo(pW0.x, pW0.y - wallH);
+    g.strokePath();
+
+    // === BASEBOARD - Classic wood ===
+    g.lineStyle(14, 0x6a4a2a, 1);
+    g.beginPath();
+    g.moveTo(p00.x, p00.y);
+    g.lineTo(pW0.x, pW0.y);
+    g.strokePath();
+    g.beginPath();
+    g.moveTo(pW0.x, pW0.y);
+    g.lineTo(pW0.x + (room.gridH * TILE_W / 2), pW0.y + (room.gridH * TILE_H / 2));
+    g.strokePath();
+
+    // Baseboard top highlight
+    g.lineStyle(2, 0x8a6a4a, 1);
+    g.beginPath();
+    g.moveTo(p00.x, p00.y - 12);
+    g.lineTo(pW0.x, pW0.y - 12);
+    g.strokePath();
+
+    // === CEILING MOLDING - White top border ===
+    g.lineStyle(8, 0xffffff, 1);
+    g.beginPath();
+    g.moveTo(p00.x, p00.y - wallH + 3);
+    g.lineTo(pW0.x, pW0.y - wallH + 3);
+    g.strokePath();
+    g.beginPath();
+    g.moveTo(pW0.x, pW0.y - wallH + 3);
+    g.lineTo(pW0.x + (room.gridH * TILE_W / 2), pW0.y + (room.gridH * TILE_H / 2) - wallH + 3);
+    g.strokePath();
+
+    // === HABBO WINDOWS ===
+    this.drawHabboWindows(p00, pW0, wallH);
+  }
+
+  drawHabboWindows(p00, pW0, wallH) {
+    const g = this.add.graphics();
+    g.setDepth(-9999);
+
+    const wallWidth = pW0.x - p00.x;
+    const windowW = 50;
+    const windowH = 70;
+    const windowY = p00.y - wallH + 35;
+
+    // Draw 2 windows evenly spaced (classic Habbo)
+    const numWindows = 2;
+    const spacing = wallWidth / (numWindows + 1);
+
+    for (let i = 1; i <= numWindows; i++) {
+      const wx = p00.x + spacing * i;
+      const wy = windowY;
+
+      // Window outer frame (dark wood)
+      g.fillStyle(0x4a3020, 1);
+      g.fillRect(wx - windowW/2 - 6, wy - 6, windowW + 12, windowH + 12);
+
+      // Window inner frame (lighter wood)
+      g.fillStyle(0x6a5040, 1);
+      g.fillRect(wx - windowW/2 - 3, wy - 3, windowW + 6, windowH + 6);
+
+      // Window glass (sky gradient)
+      g.fillStyle(0x6ab4dc, 1);
+      g.fillRect(wx - windowW/2, wy, windowW, windowH * 0.6);
+      g.fillStyle(0x8ac8e8, 1);
+      g.fillRect(wx - windowW/2, wy + windowH * 0.6, windowW, windowH * 0.4);
+
+      // Window panes (4 sections)
+      g.fillStyle(0x5a4030, 1);
+      g.fillRect(wx - 2, wy, 4, windowH); // vertical center
+      g.fillRect(wx - windowW/2, wy + windowH/2 - 2, windowW, 4); // horizontal center
+
+      // Glass shine
+      g.fillStyle(0xffffff, 0.25);
+      g.fillRect(wx - windowW/2 + 3, wy + 3, windowW/2 - 5, windowH/2 - 5);
+
+      // Windowsill (bottom ledge)
+      g.fillStyle(0x5a4030, 1);
+      g.fillRect(wx - windowW/2 - 8, wy + windowH + 2, windowW + 16, 8);
+      g.fillStyle(0x7a6050, 1);
+      g.fillRect(wx - windowW/2 - 8, wy + windowH + 2, windowW + 16, 3);
+    }
+  }
+
+  drawFloor() {
+    const room = this.room;
+
+    for (let y = 0; y < room.gridH; y++) {
+      for (let x = 0; x < room.gridW; x++) {
+        const p = gridToScreen(x, y, this.originX, this.originY);
+        const isLight = (x + y) % 2 === 0;
+        const g = this.add.graphics();
+        g.setDepth(p.y);
+
+        // Classic Habbo parquet - bright saturated wood colors
+        const lightColor = 0xd4a574;  // Light oak
+        const darkColor = 0xb8864a;   // Dark oak
+        const tileColor = isLight ? lightColor : darkColor;
+
+        // Tile top surface
+        g.fillStyle(tileColor, 1);
+        g.beginPath();
+        g.moveTo(p.x, p.y);
+        g.lineTo(p.x + TILE_W/2, p.y + TILE_H/2);
+        g.lineTo(p.x, p.y + TILE_H);
+        g.lineTo(p.x - TILE_W/2, p.y + TILE_H/2);
+        g.closePath();
+        g.fillPath();
+
+        // Wood grain lines (pixel-art style)
+        const grainColor = isLight ? 0xc4955a : 0xa87640;
+        g.lineStyle(1, grainColor, 0.5);
+        for (let i = 0; i < 3; i++) {
+          const offset = (i - 1) * 8;
+          g.beginPath();
+          g.moveTo(p.x + offset - 10, p.y + TILE_H/2 - 5);
+          g.lineTo(p.x + offset + 10, p.y + TILE_H/2 + 5);
+          g.strokePath();
+        }
+
+        // Tile 3D edges - left side
+        const edgeL = isLight ? 0xa07848 : 0x8a6838;
+        g.fillStyle(edgeL, 1);
+        g.beginPath();
+        g.moveTo(p.x - TILE_W/2, p.y + TILE_H/2);
+        g.lineTo(p.x, p.y + TILE_H);
+        g.lineTo(p.x, p.y + TILE_H + 8);
+        g.lineTo(p.x - TILE_W/2, p.y + TILE_H/2 + 8);
+        g.closePath();
+        g.fillPath();
+
+        // Tile 3D edges - right side (darker)
+        const edgeR = isLight ? 0x8a6838 : 0x745828;
+        g.fillStyle(edgeR, 1);
+        g.beginPath();
+        g.moveTo(p.x + TILE_W/2, p.y + TILE_H/2);
+        g.lineTo(p.x, p.y + TILE_H);
+        g.lineTo(p.x, p.y + TILE_H + 8);
+        g.lineTo(p.x + TILE_W/2, p.y + TILE_H/2 + 8);
+        g.closePath();
+        g.fillPath();
+
+        // Pixel-art style outline (classic Habbo look)
+        g.lineStyle(1, 0x5a4020, 1);
+        g.beginPath();
+        g.moveTo(p.x, p.y);
+        g.lineTo(p.x + TILE_W/2, p.y + TILE_H/2);
+        g.lineTo(p.x, p.y + TILE_H);
+        g.lineTo(p.x - TILE_W/2, p.y + TILE_H/2);
+        g.closePath();
+        g.strokePath();
+
+        // Highlight on light tiles (top-left shine)
+        if (isLight) {
+          g.fillStyle(0xffffff, 0.15);
+          g.beginPath();
+          g.moveTo(p.x - TILE_W/4, p.y + TILE_H/4);
+          g.lineTo(p.x, p.y);
+          g.lineTo(p.x - TILE_W/2, p.y + TILE_H/2);
+          g.closePath();
+          g.fillPath();
+        }
+      }
+    }
+  }
+
+  drawFloorBorder() {
+    const room = this.room;
+    const g = this.add.graphics();
+    g.setDepth(99999);
+
+    const p00 = gridToScreen(0, 0, this.originX, this.originY);
+    const p0H = gridToScreen(0, room.gridH, this.originX, this.originY);
+    const pWH = gridToScreen(room.gridW, room.gridH, this.originX, this.originY);
+
+    // Floor edge shadow
+    g.lineStyle(4, 0x2a1a10, 1);
+    g.beginPath();
+    g.moveTo(p00.x - TILE_W/2, p00.y + TILE_H/2);
+    g.lineTo(p0H.x, p0H.y + TILE_H + 6);
+    g.lineTo(pWH.x - TILE_W/2, pWH.y + TILE_H/2 + 6);
+    g.strokePath();
+
+    // Floor edge highlight
+    g.lineStyle(2, 0x6a5a4a, 1);
+    g.beginPath();
+    g.moveTo(p00.x - TILE_W/2 + 2, p00.y + TILE_H/2 - 2);
+    g.lineTo(p0H.x + 2, p0H.y + TILE_H + 4);
+    g.strokePath();
+  }
+
+  placeFurniture() {
+    const room = this.room;
+
+    room.furni.forEach((f, idx) => {
+      const p = gridToScreen(f.x, f.y, this.originX, this.originY);
+      const depth = p.y + 100;
+      this.blocked.add(`${f.x},${f.y}`);
+
+      // Shadow
+      const noShadow = ['rug', 'danceFloor', 'flowerBed'];
+      if (!noShadow.includes(f.type)) {
+        const shadow = this.add.ellipse(p.x, p.y + 14, 44, 16, 0x000000, 0.3);
+        shadow.setDepth(depth - 1);
+      }
+
+      // Draw furniture
+      switch(f.type) {
+        case 'sofa': this.drawSofa(p.x, p.y, f.color || 0xcc4455, depth); break;
+        case 'table': this.drawTable(p.x, p.y, depth); break;
+        case 'plant': this.drawPlant(p.x, p.y, depth, idx); break;
+        case 'lamp': this.drawLamp(p.x, p.y, depth); break;
+        case 'coffeeTable': this.drawCoffeeTable(p.x, p.y, depth); break;
+        case 'armchair': this.drawArmchair(p.x, p.y, f.color || 0xcc4455, depth); break;
+        case 'bookshelf': this.drawBookshelf(p.x, p.y, depth); break;
+        case 'bar': this.drawBar(p.x, p.y, depth); break;
+        case 'barStool': this.drawBarStool(p.x, p.y, f.color || 0x333333, depth); break;
+        case 'rug': this.drawRug(p.x, p.y, f.color || 0x884422, depth, f.w || 2, f.h || 2); break;
+        // Soul Lounge
+        case 'coffeeTable': this.drawCoffeeTable(p.x, p.y, depth); break;
+        case 'armchair': this.drawArmchair(p.x, p.y, f.color || 0xcc4455, depth); break;
+        case 'bookshelf': this.drawBookshelf(p.x, p.y, depth); break;
+        case 'bar': this.drawBar(p.x, p.y, depth); break;
+        case 'barStool': this.drawBarStool(p.x, p.y, f.color || 0x333333, depth); break;
+        case 'rug': this.drawRug(p.x, p.y, f.color || 0x884422, depth, f.w || 2, f.h || 2); break;
+        // Rooftop Garden
+        case 'bench': this.drawBench(p.x, p.y, f.color || 0xffffff, depth); break;
+        case 'gardenTable': this.drawGardenTable(p.x, p.y, depth); break;
+        case 'fountain': this.drawFountain(p.x, p.y, depth); break;
+        case 'flowerBed': this.drawFlowerBed(p.x, p.y, f.color || 0xff6699, depth); break;
+        case 'tree': this.drawTree(p.x, p.y, depth); break;
+        case 'gazebo': this.drawGazebo(p.x, p.y, depth); break;
+        case 'streetLamp': this.drawStreetLamp(p.x, p.y, depth); break;
+        // Cozy Cafe
+        case 'counter': this.drawCounter(p.x, p.y, depth, f.w || 1); break;
+        case 'coffeeMachine': this.drawCoffeeMachine(p.x, p.y, depth); break;
+        case 'cakeDisplay': this.drawCakeDisplay(p.x, p.y, depth); break;
+        case 'cafeTable': this.drawCafeTable(p.x, p.y, depth); break;
+        case 'chair': this.drawChair(p.x, p.y, f.color || 0x8b4513, depth); break;
+        case 'hangingPlant': this.drawHangingPlant(p.x, p.y, depth); break;
+        // Night Club
+        case 'djBooth': this.drawDJBooth(p.x, p.y, depth); break;
+        case 'speaker': this.drawSpeaker(p.x, p.y, depth); break;
+        case 'danceFloor': this.drawDanceFloor(p.x, p.y, depth, f.w || 4, f.h || 3); break;
+        case 'vipSofa': this.drawVIPSofa(p.x, p.y, f.color || 0x9933ff, depth); break;
+        case 'vipTable': this.drawVIPTable(p.x, p.y, depth); break;
+        case 'neonBar': this.drawNeonBar(p.x, p.y, depth, f.w || 3); break;
+        case 'laserLight': this.drawLaserLight(p.x, p.y, depth); break;
+        case 'discoBall': this.drawDiscoBall(p.x, p.y, depth); break;
+      }
+    });
+  }
+
+  drawSofa(cx, cy, color, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    const dark1 = Phaser.Display.Color.ValueToColor(color).darken(15).color;
+    const dark2 = Phaser.Display.Color.ValueToColor(color).darken(30).color;
+    const light = Phaser.Display.Color.ValueToColor(color).lighten(10).color;
+
+    g.fillStyle(dark2, 1);
+    g.fillRoundedRect(cx - 26, cy - 38, 52, 24, 4);
+    g.fillStyle(color, 1);
+    g.fillRoundedRect(cx - 28, cy - 18, 56, 22, 6);
+    g.fillStyle(light, 1);
+    g.fillRoundedRect(cx - 24, cy - 16, 48, 8, 3);
+    g.fillStyle(dark1, 1);
+    g.fillRoundedRect(cx - 32, cy - 24, 10, 28, 4);
+    g.fillRoundedRect(cx + 22, cy - 24, 10, 28, 4);
+    g.fillStyle(0x4a3020, 1);
+    g.fillRect(cx - 26, cy + 2, 6, 8);
+    g.fillRect(cx + 20, cy + 2, 6, 8);
+  }
+
+  drawTable(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x8b5a2b, 1);
+    g.beginPath();
+    g.moveTo(cx, cy - 22);
+    g.lineTo(cx + 32, cy - 10);
+    g.lineTo(cx, cy + 2);
+    g.lineTo(cx - 32, cy - 10);
+    g.closePath();
+    g.fillPath();
+    g.fillStyle(0x5a3a1b, 1);
+    g.fillRect(cx - 24, cy - 8, 6, 20);
+    g.fillRect(cx + 18, cy - 8, 6, 20);
+  }
+
+  drawPlant(cx, cy, depth, index) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0xc4785a, 1);
+    g.beginPath();
+    g.moveTo(cx - 14, cy - 4);
+    g.lineTo(cx + 14, cy - 4);
+    g.lineTo(cx + 10, cy + 12);
+    g.lineTo(cx - 10, cy + 12);
+    g.closePath();
+    g.fillPath();
+    const leafColors = [0x228844, 0x33aa55, 0x117733];
+    g.fillStyle(leafColors[index % 3], 1);
+    g.fillEllipse(cx, cy - 36, 10, 28);
+    g.fillEllipse(cx - 12, cy - 28, 10, 22);
+    g.fillEllipse(cx + 12, cy - 28, 10, 22);
+  }
+
+  drawLamp(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0xffffaa, 0.3);
+    g.fillCircle(cx, cy - 44, 24);
+    g.fillStyle(0xffeedd, 1);
+    g.beginPath();
+    g.moveTo(cx - 6, cy - 58);
+    g.lineTo(cx + 6, cy - 58);
+    g.lineTo(cx + 18, cy - 32);
+    g.lineTo(cx - 18, cy - 32);
+    g.closePath();
+    g.fillPath();
+    g.fillStyle(0x888888, 1);
+    g.fillRect(cx - 3, cy - 32, 6, 38);
+    g.fillStyle(0x666666, 1);
+    g.fillEllipse(cx, cy + 8, 16, 7);
+  }
+
+  // ========== Soul Lounge 家具 ==========
+  drawCoffeeTable(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x5a3a2a, 1);
+    g.fillRoundedRect(cx - 22, cy - 12, 44, 24, 3);
+    g.fillStyle(0x3a2a1a, 1);
+    g.fillRect(cx - 18, cy + 8, 4, 10);
+    g.fillRect(cx + 14, cy + 8, 4, 10);
+  }
+
+  drawArmchair(cx, cy, color, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    const dark = Phaser.Display.Color.ValueToColor(color).darken(20).color;
+    g.fillStyle(dark, 1);
+    g.fillRoundedRect(cx - 18, cy - 32, 36, 20, 4);
+    g.fillStyle(color, 1);
+    g.fillRoundedRect(cx - 20, cy - 14, 40, 18, 5);
+    g.fillStyle(dark, 1);
+    g.fillRoundedRect(cx - 24, cy - 20, 8, 24, 3);
+    g.fillRoundedRect(cx + 16, cy - 20, 8, 24, 3);
+  }
+
+  drawBookshelf(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x5a3a2a, 1);
+    g.fillRect(cx - 20, cy - 60, 40, 70);
+    g.fillStyle(0x4a2a1a, 1);
+    g.fillRect(cx - 18, cy - 55, 36, 2);
+    g.fillRect(cx - 18, cy - 35, 36, 2);
+    g.fillRect(cx - 18, cy - 15, 36, 2);
+    // Books
+    const bookColors = [0xcc3333, 0x3366cc, 0x33aa55, 0xccaa33, 0x9933cc];
+    for (let i = 0; i < 4; i++) {
+      g.fillStyle(bookColors[i % 5], 1);
+      g.fillRect(cx - 16 + i * 8, cy - 52, 6, 15);
+      g.fillStyle(bookColors[(i + 2) % 5], 1);
+      g.fillRect(cx - 16 + i * 8, cy - 32, 6, 15);
+    }
+  }
+
+  drawBar(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x3a2a1a, 1);
+    g.fillRect(cx - 40, cy - 30, 80, 40);
+    g.fillStyle(0x5a4a3a, 1);
+    g.fillRect(cx - 42, cy - 32, 84, 8);
+    // Bottles
+    g.fillStyle(0x33aa55, 0.8);
+    g.fillRect(cx - 30, cy - 50, 8, 18);
+    g.fillStyle(0xcc8833, 0.8);
+    g.fillRect(cx - 18, cy - 48, 8, 16);
+    g.fillStyle(0x3366cc, 0.8);
+    g.fillRect(cx - 6, cy - 52, 8, 20);
+    g.fillStyle(0xcc3333, 0.8);
+    g.fillRect(cx + 6, cy - 46, 8, 14);
+  }
+
+  drawBarStool(cx, cy, color, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x888888, 1);
+    g.fillRect(cx - 2, cy - 20, 4, 28);
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy - 22, 12);
+  }
+
+  drawRug(cx, cy, color, depth, w, h) {
+    const g = this.add.graphics();
+    g.setDepth(depth - 50);
+    const light = Phaser.Display.Color.ValueToColor(color).lighten(20).color;
+    g.fillStyle(color, 0.8);
+    // Isometric rug
+    const rw = w * TILE_W / 2;
+    const rh = h * TILE_H / 2;
+    g.beginPath();
+    g.moveTo(cx, cy - rh);
+    g.lineTo(cx + rw, cy);
+    g.lineTo(cx, cy + rh);
+    g.lineTo(cx - rw, cy);
+    g.closePath();
+    g.fillPath();
+    g.lineStyle(3, light, 0.8);
+    g.strokePath();
+  }
+
+  // ========== Rooftop Garden 家具 ==========
+  drawBench(cx, cy, color, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x666666, 1);
+    g.fillRect(cx - 24, cy + 2, 4, 12);
+    g.fillRect(cx + 20, cy + 2, 4, 12);
+    g.fillStyle(color, 1);
+    g.fillRect(cx - 28, cy - 8, 56, 12);
+    g.fillStyle(Phaser.Display.Color.ValueToColor(color).darken(10).color, 1);
+    g.fillRect(cx - 26, cy - 24, 52, 8);
+  }
+
+  drawGardenTable(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0xeeeeee, 1);
+    g.fillCircle(cx, cy - 10, 24);
+    g.fillStyle(0xcccccc, 1);
+    g.fillRect(cx - 3, cy - 8, 6, 22);
+    g.fillCircle(cx, cy + 12, 10);
+  }
+
+  drawFountain(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    // Base
+    g.fillStyle(0x888888, 1);
+    g.fillCircle(cx, cy, 36);
+    g.fillStyle(0x4499dd, 0.7);
+    g.fillCircle(cx, cy, 30);
+    // Center pillar
+    g.fillStyle(0xaaaaaa, 1);
+    g.fillRect(cx - 6, cy - 40, 12, 44);
+    g.fillCircle(cx, cy - 42, 10);
+    // Water effect
+    g.fillStyle(0x66ccff, 0.5);
+    g.fillCircle(cx - 12, cy - 30, 4);
+    g.fillCircle(cx + 12, cy - 30, 4);
+    g.fillCircle(cx, cy - 35, 4);
+  }
+
+  drawFlowerBed(cx, cy, color, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x5a3a2a, 1);
+    g.fillRect(cx - 16, cy - 4, 32, 16);
+    g.fillStyle(0x228844, 1);
+    g.fillEllipse(cx - 8, cy - 12, 8, 10);
+    g.fillEllipse(cx + 8, cy - 12, 8, 10);
+    g.fillStyle(color, 1);
+    g.fillCircle(cx - 8, cy - 18, 5);
+    g.fillCircle(cx + 8, cy - 16, 4);
+    g.fillCircle(cx, cy - 14, 4);
+  }
+
+  drawTree(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x5a3a2a, 1);
+    g.fillRect(cx - 8, cy - 40, 16, 52);
+    g.fillStyle(0x228844, 1);
+    g.fillCircle(cx, cy - 60, 32);
+    g.fillStyle(0x33aa55, 1);
+    g.fillCircle(cx - 14, cy - 50, 20);
+    g.fillCircle(cx + 14, cy - 50, 20);
+    g.fillCircle(cx, cy - 75, 22);
+  }
+
+  drawGazebo(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    // Posts
+    g.fillStyle(0xeeeeee, 1);
+    g.fillRect(cx - 30, cy - 50, 6, 60);
+    g.fillRect(cx + 24, cy - 50, 6, 60);
+    // Roof
+    g.fillStyle(0xcc6644, 1);
+    g.beginPath();
+    g.moveTo(cx, cy - 80);
+    g.lineTo(cx + 40, cy - 50);
+    g.lineTo(cx, cy - 45);
+    g.lineTo(cx - 40, cy - 50);
+    g.closePath();
+    g.fillPath();
+  }
+
+  drawStreetLamp(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x333333, 1);
+    g.fillRect(cx - 3, cy - 70, 6, 80);
+    g.fillStyle(0xffffcc, 0.4);
+    g.fillCircle(cx, cy - 60, 20);
+    g.fillStyle(0x444444, 1);
+    g.fillRect(cx - 10, cy - 75, 20, 8);
+  }
+
+  // ========== Cozy Cafe 家具 ==========
+  drawCounter(cx, cy, depth, w) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    const width = w * 40;
+    g.fillStyle(0x5a4a3a, 1);
+    g.fillRect(cx - width/2, cy - 28, width, 36);
+    g.fillStyle(0x8b7355, 1);
+    g.fillRect(cx - width/2 - 2, cy - 30, width + 4, 8);
+  }
+
+  drawCoffeeMachine(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x333333, 1);
+    g.fillRect(cx - 14, cy - 36, 28, 40);
+    g.fillStyle(0xcc3333, 1);
+    g.fillCircle(cx - 4, cy - 28, 4);
+    g.fillStyle(0x33cc33, 1);
+    g.fillCircle(cx + 6, cy - 28, 3);
+    g.fillStyle(0x888888, 1);
+    g.fillRect(cx - 8, cy - 16, 16, 12);
+  }
+
+  drawCakeDisplay(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0xaaddff, 0.5);
+    g.fillRect(cx - 16, cy - 32, 32, 36);
+    g.fillStyle(0xffccaa, 1);
+    g.fillCircle(cx - 6, cy - 14, 6);
+    g.fillStyle(0xffaacc, 1);
+    g.fillCircle(cx + 6, cy - 16, 5);
+    g.fillStyle(0xcc8866, 1);
+    g.fillRect(cx - 4, cy - 8, 10, 6);
+  }
+
+  drawCafeTable(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x333333, 1);
+    g.fillRect(cx - 2, cy - 10, 4, 22);
+    g.fillCircle(cx, cy + 10, 8);
+    g.fillStyle(0x8b7355, 1);
+    g.fillCircle(cx, cy - 12, 20);
+    // Cup
+    g.fillStyle(0xeeeeee, 1);
+    g.fillRect(cx - 4, cy - 18, 8, 6);
+  }
+
+  drawChair(cx, cy, color, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(color, 1);
+    g.fillRect(cx - 10, cy - 6, 20, 14);
+    g.fillStyle(Phaser.Display.Color.ValueToColor(color).darken(20).color, 1);
+    g.fillRect(cx - 10, cy - 24, 20, 6);
+    g.fillRect(cx - 8, cy - 18, 4, 12);
+    g.fillRect(cx + 4, cy - 18, 4, 12);
+    g.fillRect(cx - 8, cy + 6, 4, 8);
+    g.fillRect(cx + 4, cy + 6, 4, 8);
+  }
+
+  drawHangingPlant(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x8b5a2b, 1);
+    g.fillRect(cx - 10, cy - 50, 20, 16);
+    g.fillStyle(0x228844, 1);
+    g.fillEllipse(cx - 8, cy - 36, 10, 14);
+    g.fillEllipse(cx + 8, cy - 34, 10, 16);
+    g.fillEllipse(cx, cy - 30, 8, 20);
+    g.lineStyle(2, 0x666666, 1);
+    g.lineBetween(cx, cy - 70, cx, cy - 50);
+  }
+
+  // ========== Night Club 家具 ==========
+  drawDJBooth(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x1a1a2e, 1);
+    g.fillRect(cx - 40, cy - 30, 80, 40);
+    g.fillStyle(0x333366, 1);
+    g.fillRect(cx - 38, cy - 28, 76, 6);
+    // Turntables
+    g.fillStyle(0x222222, 1);
+    g.fillCircle(cx - 18, cy - 14, 14);
+    g.fillCircle(cx + 18, cy - 14, 14);
+    g.fillStyle(0x111111, 1);
+    g.fillCircle(cx - 18, cy - 14, 6);
+    g.fillCircle(cx + 18, cy - 14, 6);
+    // Mixer
+    g.fillStyle(0x444466, 1);
+    g.fillRect(cx - 10, cy - 20, 20, 16);
+    // LED
+    g.fillStyle(0x00ff00, 1);
+    g.fillRect(cx - 6, cy - 18, 2, 4);
+    g.fillStyle(0x00ff00, 1);
+    g.fillRect(cx - 2, cy - 18, 2, 6);
+    g.fillStyle(0xffff00, 1);
+    g.fillRect(cx + 2, cy - 18, 2, 8);
+    g.fillStyle(0xff0000, 1);
+    g.fillRect(cx + 6, cy - 18, 2, 4);
+  }
+
+  drawSpeaker(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x222222, 1);
+    g.fillRect(cx - 16, cy - 50, 32, 58);
+    g.fillStyle(0x111111, 1);
+    g.fillCircle(cx, cy - 34, 10);
+    g.fillCircle(cx, cy - 12, 14);
+    g.fillStyle(0x333333, 1);
+    g.fillCircle(cx, cy - 34, 4);
+    g.fillCircle(cx, cy - 12, 6);
+  }
+
+  drawDanceFloor(cx, cy, depth, w, h) {
+    const g = this.add.graphics();
+    g.setDepth(depth - 50);
+    const colors = [0xff00ff, 0x00ffff, 0xffff00, 0x00ff00, 0xff0000, 0x0000ff];
+    const tileSize = 20;
+    for (let i = 0; i < w * 2; i++) {
+      for (let j = 0; j < h * 2; j++) {
+        const color = colors[(i + j + Math.floor(Date.now() / 500)) % colors.length];
+        g.fillStyle(color, 0.4);
+        const tx = cx + (i - w) * tileSize / 2 + (j - h) * tileSize / 2;
+        const ty = cy + (j - h) * tileSize / 4 - (i - w) * tileSize / 4;
+        g.fillRect(tx - 8, ty - 4, 16, 8);
+      }
+    }
+  }
+
+  drawVIPSofa(cx, cy, color, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    const dark = Phaser.Display.Color.ValueToColor(color).darken(30).color;
+    g.fillStyle(dark, 1);
+    g.fillRoundedRect(cx - 28, cy - 40, 56, 26, 6);
+    g.fillStyle(color, 1);
+    g.fillRoundedRect(cx - 30, cy - 18, 60, 24, 8);
+    // Glow effect
+    g.fillStyle(color, 0.3);
+    g.fillRoundedRect(cx - 32, cy - 20, 64, 28, 10);
+  }
+
+  drawVIPTable(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    g.fillStyle(0x222244, 1);
+    g.fillCircle(cx, cy - 8, 18);
+    g.fillStyle(0x9933ff, 0.3);
+    g.fillCircle(cx, cy - 8, 22);
+    g.fillStyle(0x111122, 1);
+    g.fillRect(cx - 3, cy - 6, 6, 18);
+  }
+
+  drawNeonBar(cx, cy, depth, w) {
+    const g = this.add.graphics();
+    g.setDepth(depth);
+    const width = w * 35;
+    g.fillStyle(0x1a1a2e, 1);
+    g.fillRect(cx - width/2, cy - 28, width, 36);
+    // Neon edge
+    g.lineStyle(3, 0xff00ff, 0.8);
+    g.strokeRect(cx - width/2, cy - 28, width, 36);
+    g.fillStyle(0x333366, 1);
+    g.fillRect(cx - width/2, cy - 30, width, 6);
+    // Bottles with glow
+    g.fillStyle(0x00ffff, 0.6);
+    g.fillRect(cx - 20, cy - 44, 6, 14);
+    g.fillStyle(0xff00ff, 0.6);
+    g.fillRect(cx - 8, cy - 42, 6, 12);
+    g.fillStyle(0xffff00, 0.6);
+    g.fillRect(cx + 4, cy - 46, 6, 16);
+  }
+
+  drawLaserLight(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth + 1000);
+    g.fillStyle(0x222222, 1);
+    g.fillRect(cx - 8, cy - 60, 16, 12);
+    // Laser beams
+    g.lineStyle(2, 0x00ff00, 0.5);
+    g.lineBetween(cx, cy - 48, cx - 60, cy + 100);
+    g.lineBetween(cx, cy - 48, cx + 80, cy + 80);
+    g.lineStyle(2, 0xff0000, 0.4);
+    g.lineBetween(cx, cy - 48, cx + 40, cy + 120);
+  }
+
+  drawDiscoBall(cx, cy, depth) {
+    const g = this.add.graphics();
+    g.setDepth(depth + 1000);
+    g.lineStyle(2, 0x666666, 1);
+    g.lineBetween(cx, cy - 80, cx, cy - 50);
+    g.fillStyle(0xcccccc, 1);
+    g.fillCircle(cx, cy - 40, 18);
+    // Sparkles
+    g.fillStyle(0xffffff, 0.8);
+    g.fillCircle(cx - 8, cy - 44, 3);
+    g.fillCircle(cx + 6, cy - 36, 3);
+    g.fillCircle(cx + 2, cy - 48, 2);
+    // Light rays
+    g.lineStyle(1, 0xffffaa, 0.3);
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      g.lineBetween(cx, cy - 40, cx + Math.cos(angle) * 80, cy - 40 + Math.sin(angle) * 60);
+    }
+  }
+
+  placeAgents() {
+    agents.forEach(agent => {
+      const x = Math.min(agent.x, this.room.gridW - 1);
+      const y = Math.min(agent.y, this.room.gridH - 1);
+      const p = gridToScreen(x, y, this.originX, this.originY);
+
+      // Shadow
+      const shadow = this.add.ellipse(p.x, p.y + 14, 40, 16, 0x000000, 0.4);
+      shadow.setDepth(p.y + 199);
+
+      // Avatar
+      let sprite;
+      if (this.textures.exists(`avatar_${agent.id}`)) {
+        // Set LINEAR filter for smooth avatar scaling
+        const tex = this.textures.get(`avatar_${agent.id}`);
+        if (tex) tex.setFilter(Phaser.Textures.FilterMode.LINEAR);
+
+        sprite = this.add.image(p.x, p.y - 30, `avatar_${agent.id}`);
+        sprite.setScale(0.9);
+      } else {
+        sprite = this.add.circle(p.x, p.y - 24, 16, 0x5599ff);
+      }
+      sprite.setDepth(p.y + 200);
+      sprite.setInteractive({ useHandCursor: true });
+
+      // Name tag
+      const nameBg = this.add.graphics();
+      nameBg.fillStyle(0x000000, 0.75);
+      nameBg.fillRoundedRect(p.x - 36, p.y + 20, 72, 22, 10);
+      nameBg.setDepth(p.y + 201);
+
+      const nameText = this.add.text(p.x, p.y + 31, agent.name, {
+        fontSize: '11px',
+        fontFamily: 'Arial',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }).setOrigin(0.5);
+      nameText.setDepth(p.y + 202);
+
+      // Compatibility badge (if available)
+      if (agent.compatibility) {
+        const score = Math.round(agent.compatibility);
+        const badgeBg = this.add.graphics();
+        badgeBg.fillStyle(score > 70 ? 0x44ff88 : 0xffaa44, 0.9);
+        badgeBg.fillRoundedRect(p.x + 20, p.y - 60, 28, 18, 4);
+        badgeBg.setDepth(p.y + 203);
+
+        const badge = this.add.text(p.x + 34, p.y - 51, `${score}%`, {
+          fontSize: '10px',
+          fontFamily: 'Arial',
+          color: '#000',
+          fontStyle: 'bold'
+        }).setOrigin(0.5);
+        badge.setDepth(p.y + 204);
+      }
+
+      // Click to chat (not for self)
+      sprite.on('pointerdown', (pointer) => {
+        if (pointer.event) pointer.event.stopPropagation();
+        console.log('Clicked agent:', agent.name, 'isMe:', agent.isMe);
+        if (agent.isMe) {
+          addSystemMessage("That's you! Click on other agents to chat.");
+        } else {
+          startChatWithAgent(agent);
+        }
+      });
+
+      // Hover effect
+      sprite.on('pointerover', () => {
+        sprite.setScale(1.0);
+        nameText.setStyle({ color: '#7ecfff' });
+      });
+      sprite.on('pointerout', () => {
+        sprite.setScale(0.9);
+        nameText.setStyle({ color: '#ffffff' });
+      });
+
+      this.avatars[agent.id] = { sprite, shadow, nameBg, nameText, gridX: x, gridY: y };
+    });
+  }
+
+  isValidTile(x, y) {
+    return x >= 0 && x < this.room.gridW && y >= 0 && y < this.room.gridH;
+  }
+}
+
+function initGame() {
+  const config = {
+    type: Phaser.AUTO,
+    parent: 'game',
+    backgroundColor: 0x5aaae8,
+    pixelArt: true,
+    antialias: false,
+    dom: { createContainer: true },
+    scale: {
+      mode: Phaser.Scale.RESIZE,
+      autoCenter: Phaser.Scale.CENTER_BOTH
+    },
+    scene: [RoomScene]
+  };
+
+  new Phaser.Game(config);
+}
+
+function changeRoom(roomId) {
+  currentRoom = roomId;
+  if (gameScene) {
+    gameScene.loadRoom(roomId);
+  }
+
+  document.querySelectorAll('.room-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.room === roomId);
+  });
+
+  addSystemMessage(`Entered ${ROOMS[roomId].name}`);
+}
+
+// Room button events
+document.querySelectorAll('.room-btn').forEach(btn => {
+  btn.addEventListener('click', () => changeRoom(btn.dataset.room));
+});
+
+// =============================================
+// Auto-login if token exists
+// =============================================
+(async function() {
+  if (authToken) {
+    try {
+      currentUser = await api.getProfile();
+      enterGame();
+    } catch (err) {
+      // Token invalid - silently logout and show login screen
+      console.log('Auto-login failed:', err.message);
+      authToken = null;
+      localStorage.removeItem('authToken');
+      // Login screen is already visible by default
+    }
+  }
+})();
+  </script>
+</body>
+</html>
